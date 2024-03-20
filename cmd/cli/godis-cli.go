@@ -42,23 +42,21 @@ func main() {
 	done := make(chan struct{})
 	go func() {
 		for {
-			_, bytes, err := ws.ReadMessage()
+			var r internal.Reply
+			err := ws.ReadJSON(&r)
 			if err != nil {
 				close(done)
 				return
 			}
-			r, _ := internal.DecodeReply(bytes)
 			log.Printf("<- recv: %s", r)
 			log.Printf("-- time: %s", time.Since(istart))
 		}
 	}()
 
 	c := internal.MakeCommand(args...)
-	bytes, _ := internal.EncodeCommand(c)
-	err := ws.WriteMessage(websocket.TextMessage, bytes)
+	err := ws.WriteJSON(c)
 	if err != nil {
-		log.Println("EE werr:", err)
-		return
+		log.Fatal(err)
 	}
 	log.Printf("-> send: %s", c)
 

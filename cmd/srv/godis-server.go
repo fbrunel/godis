@@ -29,18 +29,16 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	for {
-		_, bytes, err := ws.ReadMessage()
+		var c internal.Command
+		err := ws.ReadJSON(&c)
 		if err != nil {
 			break
 		}
-
-		c, _ := internal.DecodeCommand(bytes)
 		log.Printf("<- recv: %s", c)
 
 		r := h.Backend.EvalCommand(c)
 
-		bytes, _ = internal.EncodeReply(r)
-		err = ws.WriteMessage(websocket.TextMessage, bytes)
+		err = ws.WriteJSON(r)
 		if err != nil {
 			break
 		}
