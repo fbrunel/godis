@@ -19,7 +19,7 @@ func (b *Backend) EvalCommand(c Command) Reply {
 		val := b.Store.Get(c.Args[0])
 		return MakeReply("OK", val)
 	case "DEL":
-		b.Store.Del(c.Args[0])
+		b.Store.Del(c.Args...)
 		return MakeReply("OK")
 	default:
 		return MakeReply("ERR")
