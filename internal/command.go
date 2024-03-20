@@ -28,11 +28,11 @@ func DecodeCommand(b []byte) (Command, error) {
 //
 
 type Reply struct {
-	Code string   `json:"code"`
-	Data []string `json:"data"`
+	Code string `json:"code"`
+	Data []any  `json:"data"`
 }
 
-func MakeReply(c string, data ...string) Reply {
+func MakeReply(c string, data ...any) Reply {
 	return Reply{c, data}
 }
 
