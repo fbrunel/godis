@@ -58,7 +58,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("-> send: %s", c)
+	log.Printf("-> sent: %s", c)
 
 	Hangup(ws)
 	<-done

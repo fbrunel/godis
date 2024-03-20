@@ -41,6 +41,7 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			break
 		}
+		log.Printf("-> sent: %s", r)
 	}
 
 	ws.Close()
