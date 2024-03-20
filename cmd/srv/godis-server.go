@@ -10,12 +10,14 @@ import (
 )
 
 type CommandHandler struct {
-	Upgrader websocket.Upgrader
+	Upgrader *websocket.Upgrader
+	Backend  *internal.Backend
 }
 
-func NewCommandHandler() *CommandHandler {
+func NewCommandHandler(backend *internal.Backend) *CommandHandler {
 	return &CommandHandler{
-		Upgrader: websocket.Upgrader{},
+		&websocket.Upgrader{},
+		backend,
 	}
 }
 
@@ -35,7 +37,8 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c, _ := internal.DecodeCommand(bytes)
 		log.Printf("<- recv: %s", c)
 
-		r := internal.MakeReply("OK")
+		r := h.Backend.EvalCommand(c)
+
 		bytes, _ = internal.EncodeReply(r)
 		err = ws.WriteMessage(websocket.TextMessage, bytes)
 		if err != nil {
@@ -49,7 +52,8 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	http.Handle("/cmd", NewCommandHandler())
+	b := internal.NewDefaultBackend()
+	http.Handle("/cmd", NewCommandHandler(b))
 	log.Printf("-- serv: %s", *addr)
 	http.ListenAndServe(*addr, nil)
 }
