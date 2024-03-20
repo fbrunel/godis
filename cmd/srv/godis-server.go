@@ -26,7 +26,6 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	defer ws.Close()
 
 	for {
 		var c internal.Command
@@ -43,6 +42,8 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+
+	ws.Close()
 }
 
 func main() {
