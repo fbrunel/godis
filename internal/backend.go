@@ -1,29 +1,70 @@
 package internal
 
+import (
+	"errors"
+)
+
+type evalFunc func(args []string, st *Store) (string, error)
+
 type Backend struct {
 	Store *Store
+	FMap  map[string]evalFunc
 }
 
 func NewDefaultBackend() *Backend {
-	return &Backend{
+	b := &Backend{
 		NewStore(),
+		make(map[string]evalFunc),
 	}
+	prepareEvalFunctions(b)
+	return b
 }
 
-func (b *Backend) EvalCommand(c Command) Reply {
-	switch c.Op {
-	case "SET":
-		b.Store.Set(c.Args[0], c.Args[1])
-		return MakeReply("OK")
-	case "GET":
-		val := b.Store.Get(c.Args[0])
-		return MakeReply("OK", val)
-	case "DEL":
-		for _, a := range c.Args {
-			b.Store.Del(a)
-		}
-		return MakeReply("OK")
-	default:
-		return MakeReply("ERR")
+//
+
+func prepareEvalFunctions(b *Backend) {
+	b.FMap["SET"] = evalSET
+	b.FMap["GET"] = evalGET
+	b.FMap["DEL"] = evalDEL
+}
+
+func evalSET(args []string, st *Store) (string, error) {
+	if len(args) < 2 {
+		return "", errors.New("")
 	}
+	k, v := args[0], args[1]
+	st.Set(k, v)
+	return v, nil
+}
+
+func evalGET(args []string, st *Store) (string, error) {
+	if len(args) < 1 {
+		return "", errors.New("")
+	}
+	val := st.Get(args[0])
+	return val, nil
+}
+
+func evalDEL(args []string, st *Store) (string, error) {
+	if len(args) < 1 {
+		return "", errors.New("")
+	}
+	for _, a := range args {
+		st.Del(a)
+	}
+	return "", nil
+}
+
+//
+
+func (b *Backend) EvalCommand(c Command) Reply {
+	eval, ok := b.FMap[c.Op]
+	if ok {
+		val, err := eval(c.Args, b.Store)
+		if err != nil {
+			return MakeReply("ERR", err.Error())
+		}
+		return MakeReply("OK!", val)
+	}
+	return MakeReply("ERR")
 }
