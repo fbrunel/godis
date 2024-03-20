@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"strings"
 )
 
 type Command struct {
@@ -10,7 +11,7 @@ type Command struct {
 }
 
 func MakeCommand(args ...string) Command {
-	return Command{args[0], args[1:]}
+	return Command{strings.ToUpper(args[0]), args[1:]}
 }
 
 func EncodeCommand(c Command) ([]byte, error) {
