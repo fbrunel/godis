@@ -53,7 +53,7 @@ func main() {
 		}
 	}()
 
-	c := internal.MakeCommand(args...)
+	c := internal.MakeCommand(args[0], args[1:]...)
 	err := ws.WriteJSON(c)
 	if err != nil {
 		log.Fatal(err)
