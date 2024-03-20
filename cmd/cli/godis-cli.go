@@ -5,6 +5,7 @@ import (
 	"godis/internal"
 	"log"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -34,8 +35,10 @@ func main() {
 
 	//
 
+	ostart := time.Now()
 	ws := Dial(addr)
 
+	istart := time.Now()
 	done := make(chan struct{})
 	go func() {
 		for {
@@ -46,6 +49,7 @@ func main() {
 			}
 			r, _ := internal.DecodeReply(bytes)
 			log.Printf("<- recv: %s", r)
+			log.Printf("-- time: %s", time.Since(istart))
 		}
 	}()
 
@@ -60,4 +64,6 @@ func main() {
 
 	Hangup(ws)
 	<-done
+
+	log.Printf("-- time: %s", time.Since(ostart))
 }
