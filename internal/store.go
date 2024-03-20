@@ -5,8 +5,8 @@ import (
 )
 
 type Store struct {
-	hmap map[string]any
-	mux  sync.RWMutex
+	HMap map[string]any
+	Mux  sync.RWMutex
 }
 
 func NewStore() *Store {
@@ -17,22 +17,22 @@ func NewStore() *Store {
 }
 
 func (st *Store) Set(key string, value any) {
-	st.mux.Lock()
-	st.hmap[key] = value
-	st.mux.Unlock()
+	st.Mux.Lock()
+	st.HMap[key] = value
+	st.Mux.Unlock()
 }
 
 func (st *Store) Get(key string) any {
-	st.mux.RLock()
-	val := st.hmap[key]
-	st.mux.RUnlock()
+	st.Mux.RLock()
+	val := st.HMap[key]
+	st.Mux.RUnlock()
 	return val
 }
 
 func (st *Store) Del(keys ...string) {
-	st.mux.Lock()
+	st.Mux.Lock()
 	for _, k := range keys {
-		delete(st.hmap, k)
+		delete(st.HMap, k)
 	}
-	st.mux.Unlock()
+	st.Mux.Unlock()
 }
