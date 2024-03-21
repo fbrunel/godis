@@ -10,17 +10,17 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func dial(addr *string) *websocket.Conn {
+func dial(addr *string) (*websocket.Conn, error) {
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/cmd"}
 	ws, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	return ws
+	return ws, nil
 }
 
 func hangup(ws *websocket.Conn) {
-	ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	_ = ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
 func main() {
@@ -36,7 +36,11 @@ func main() {
 	//
 
 	ostart := time.Now()
-	ws := dial(addr)
+	ws, err := dial(addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer hangup(ws)
 
 	istart := time.Now()
 	done := make(chan struct{})
@@ -54,7 +58,7 @@ func main() {
 	}()
 
 	c := internal.MakeCommand(args[0], args[1:]...)
-	err := ws.WriteJSON(c)
+	err = ws.WriteJSON(c)
 	if err != nil {
 		log.Fatal(err)
 	}
