@@ -10,7 +10,10 @@ type Command struct {
 }
 
 func MakeCommand(op string, args ...string) Command {
-	return Command{Op: strings.ToUpper(op), Args: args}
+	return Command{
+		Op:   strings.ToUpper(op),
+		Args: args,
+	}
 }
 
 //
@@ -21,5 +24,8 @@ type Reply struct {
 }
 
 func MakeReply(status string, data ...string) Reply {
-	return Reply{Status: status, Data: data}
+	return Reply{
+		Status: status,
+		Data:   data,
+	}
 }
