@@ -11,26 +11,25 @@ type Store struct {
 
 func NewStore() *Store {
 	return &Store{
-		make(map[string]string),
-		sync.RWMutex{},
+		HMap: make(map[string]string),
+		Mux:  sync.RWMutex{},
 	}
 }
 
 func (st *Store) Set(key string, value string) {
 	st.Mux.Lock()
+	defer st.Mux.Unlock()
 	st.HMap[key] = value
-	st.Mux.Unlock()
 }
 
 func (st *Store) Get(key string) string {
 	st.Mux.RLock()
-	val := st.HMap[key]
-	st.Mux.RUnlock()
-	return val
+	defer st.Mux.Unlock()
+	return st.HMap[key]
 }
 
 func (st *Store) Del(key string) {
 	st.Mux.Lock()
+	defer st.Mux.Unlock()
 	delete(st.HMap, key)
-	st.Mux.Unlock()
 }
