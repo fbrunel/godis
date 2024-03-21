@@ -7,28 +7,31 @@ import (
 type evalFunc func(args []string, st *Store) (string, error)
 
 type Backend struct {
-	Store *Store
-	FMap  map[string]evalFunc
+	Store   *Store
+	EvalFns map[string]evalFunc
 }
 
 func NewDefaultBackend() *Backend {
 	b := &Backend{
 		NewStore(),
-		make(map[string]evalFunc),
+		defaultEvalFns(),
 	}
-	prepareEvalFunctions(b)
 	return b
 }
 
 //
 
-func prepareEvalFunctions(b *Backend) {
-	b.FMap["SET"] = evalSET
-	b.FMap["GET"] = evalGET
-	b.FMap["DEL"] = evalDEL
+func defaultEvalFns() map[string]evalFunc {
+	fns := make(map[string]evalFunc)
+
+	fns["SET"] = evalSet
+	fns["GET"] = evalGet
+	fns["DEL"] = evalDel
+
+	return fns
 }
 
-func evalSET(args []string, st *Store) (string, error) {
+func evalSet(args []string, st *Store) (string, error) {
 	if len(args) < 2 {
 		return "", errors.New("")
 	}
@@ -37,7 +40,7 @@ func evalSET(args []string, st *Store) (string, error) {
 	return v, nil
 }
 
-func evalGET(args []string, st *Store) (string, error) {
+func evalGet(args []string, st *Store) (string, error) {
 	if len(args) < 1 {
 		return "", errors.New("")
 	}
@@ -45,7 +48,7 @@ func evalGET(args []string, st *Store) (string, error) {
 	return val, nil
 }
 
-func evalDEL(args []string, st *Store) (string, error) {
+func evalDel(args []string, st *Store) (string, error) {
 	if len(args) < 1 {
 		return "", errors.New("")
 	}
@@ -58,9 +61,9 @@ func evalDEL(args []string, st *Store) (string, error) {
 //
 
 func (b *Backend) EvalCommand(c Command) Reply {
-	eval, ok := b.FMap[c.Op]
+	fn, ok := b.EvalFns[c.Op]
 	if ok {
-		val, err := eval(c.Args, b.Store)
+		val, err := fn(c.Args, b.Store)
 		if err != nil {
 			return MakeReply("ERR", err.Error())
 		}
