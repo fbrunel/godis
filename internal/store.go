@@ -24,7 +24,7 @@ func (st *Store) Set(key string, value string) {
 
 func (st *Store) Get(key string) string {
 	st.Mux.RLock()
-	defer st.Mux.Unlock()
+	defer st.Mux.RUnlock()
 	return st.HMap[key]
 }
 
