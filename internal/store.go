@@ -12,7 +12,6 @@ type Store struct {
 func NewStore() *Store {
 	return &Store{
 		HMap: make(map[string]string),
-		Mux:  sync.RWMutex{},
 	}
 }
 
