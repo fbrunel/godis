@@ -16,8 +16,8 @@ type CommandHandler struct {
 
 func NewCommandHandler(backend *internal.Backend) *CommandHandler {
 	return &CommandHandler{
-		&websocket.Upgrader{},
-		backend,
+		Upgrader: &websocket.Upgrader{},
+		Backend:  backend,
 	}
 }
 
@@ -26,6 +26,7 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	defer ws.Close()
 
 	for {
 		var c internal.Command
@@ -43,8 +44,6 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("-> sent: %s", r)
 	}
-
-	ws.Close()
 }
 
 func main() {
@@ -52,8 +51,10 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	b := internal.NewDefaultBackend()
-	http.Handle("/cmd", NewCommandHandler(b))
+	be := internal.NewDefaultBackend()
+	http.Handle("/cmd", NewCommandHandler(be))
 	log.Printf("-- serv: %s", *addr)
-	http.ListenAndServe(*addr, nil)
+	if err := http.ListenAndServe(*addr, nil); err != nil {
+		log.Fatal(err)
+	}
 }
