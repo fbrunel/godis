@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"godis/internal"
+	godis "godis/internal"
 	"log"
 	"net/http"
 
@@ -11,10 +11,10 @@ import (
 
 type CommandHandler struct {
 	Upgrader *websocket.Upgrader
-	Backend  *internal.Backend
+	Backend  *godis.Backend
 }
 
-func NewCommandHandler(backend *internal.Backend) *CommandHandler {
+func NewCommandHandler(backend *godis.Backend) *CommandHandler {
 	return &CommandHandler{
 		Upgrader: &websocket.Upgrader{},
 		Backend:  backend,
@@ -29,7 +29,7 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	for {
-		var c internal.Command
+		var c godis.Command
 		err := ws.ReadJSON(&c)
 		if err != nil {
 			break
@@ -51,7 +51,7 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	be := internal.NewDefaultBackend()
+	be := godis.NewDefaultBackend()
 	http.Handle("/cmd", NewCommandHandler(be))
 	log.Printf("-- serv: %s", *addr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {

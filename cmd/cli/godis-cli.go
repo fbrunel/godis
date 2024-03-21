@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"godis/internal"
+	godis "godis/internal"
 	"log"
 	"net/url"
 	"time"
@@ -46,7 +46,7 @@ func main() {
 	done := make(chan struct{})
 	go func() {
 		for {
-			var r internal.Reply
+			var r godis.Reply
 			err := ws.ReadJSON(&r)
 			if err != nil {
 				close(done)
@@ -57,7 +57,7 @@ func main() {
 		}
 	}()
 
-	c := internal.MakeCommand(args[0], args[1:]...)
+	c := godis.MakeCommand(args[0], args[1:]...)
 	err = ws.WriteJSON(c)
 	if err != nil {
 		log.Fatal(err)
