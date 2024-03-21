@@ -10,14 +10,14 @@ import (
 )
 
 type CommandHandler struct {
-	Upgrader *websocket.Upgrader
 	Backend  *godis.Backend
+	Upgrader websocket.Upgrader
 }
 
 func NewCommandHandler(backend *godis.Backend) *CommandHandler {
 	return &CommandHandler{
-		Upgrader: &websocket.Upgrader{},
 		Backend:  backend,
+		Upgrader: websocket.Upgrader{},
 	}
 }
 
@@ -47,14 +47,12 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	addr := flag.String("addr", "127.0.0.1:8080", "")
+	addr := flag.String("addr", ":8080", "")
 	flag.Parse()
 	log.SetFlags(0)
 
 	be := godis.NewDefaultBackend()
 	http.Handle("/cmd", NewCommandHandler(be))
 	log.Printf("-- serv: %s", *addr)
-	if err := http.ListenAndServe(*addr, nil); err != nil {
-		log.Fatal(err)
-	}
+	log.Fatal(http.ListenAndServe(*addr, nil))
 }

@@ -24,7 +24,7 @@ func hangup(ws *websocket.Conn) {
 }
 
 func main() {
-	addr := flag.String("addr", "127.0.0.1:8080", "")
+	addr := flag.String("addr", ":8080", "")
 	flag.Parse()
 	log.SetFlags(0)
 
