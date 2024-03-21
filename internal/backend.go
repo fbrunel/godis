@@ -11,7 +11,7 @@ type Backend struct {
 	EvalFns map[string]evalFunc
 }
 
-func NewDefaultBackend() *Backend {
+func NewBackend() *Backend {
 	return &Backend{
 		Store:   NewStore(),
 		EvalFns: defaultEvalFns(),

@@ -51,7 +51,7 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	be := godis.NewDefaultBackend()
+	be := godis.NewBackend()
 	http.Handle("/cmd", NewCommandHandler(be))
 	log.Printf("-- serv: %s", *addr)
 	log.Fatal(http.ListenAndServe(*addr, nil))
