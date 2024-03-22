@@ -6,13 +6,13 @@ import (
 
 type cmdFunc func(args []string, st *Store) (string, error)
 
-type CommandRunner struct {
+type CommandService struct {
 	store  *Store
 	cmdFns map[string]cmdFunc
 }
 
-func NewCommandRunner() *CommandRunner {
-	return &CommandRunner{
+func NewCommandService() *CommandService {
+	return &CommandService{
 		store:  NewStore(),
 		cmdFns: defaultCmdFns(),
 	}
@@ -56,13 +56,13 @@ func cmdDel(args []string, st *Store) (string, error) {
 
 //
 
-func (b *CommandRunner) RunCommand(c Command) Reply {
-	fn, exists := b.cmdFns[c.Op]
+func (srv *CommandService) ExecCommand(c Command) Reply {
+	fn, exists := srv.cmdFns[c.Op]
 	if !exists {
 		return MakeReply("ERR", "unknown command")
 	}
 
-	val, err := fn(c.Args, b.store)
+	val, err := fn(c.Args, srv.store)
 	if err != nil {
 		return MakeReply("ERR", err.Error())
 	}
