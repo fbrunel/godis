@@ -19,8 +19,8 @@ func dial(addr *string) (*websocket.Conn, error) {
 	return ws, nil
 }
 
-func hangup(ws *websocket.Conn) {
-	_ = ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+func hangup(ws *websocket.Conn) error {
+	return ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
 func main() {
