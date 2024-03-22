@@ -52,7 +52,7 @@ func main() {
 				close(done)
 				return
 			}
-			log.Printf("<- recv: %s", r)
+			log.Printf("<- recv: %v", r)
 			log.Printf("-- time: %s", time.Since(istart))
 		}
 	}()
@@ -62,7 +62,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("-> sent: %s", c)
+	log.Printf("-> sent: %v", c)
 
 	hangup(ws)
 	<-done

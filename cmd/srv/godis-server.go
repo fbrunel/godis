@@ -34,7 +34,7 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			break
 		}
-		log.Printf("<- recv: %s", c)
+		log.Printf("<- recv: %v", c)
 
 		r := h.Runner.RunCommand(c)
 
@@ -42,7 +42,7 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			break
 		}
-		log.Printf("-> sent: %s", r)
+		log.Printf("-> sent: %v", r)
 	}
 }
 
