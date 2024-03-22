@@ -1,31 +1,70 @@
 package internal
 
 import (
-	"strings"
+	"errors"
 )
 
-type Command struct {
-	Op   string   `json:"op"`
-	Args []string `json:"args"`
+type cmdFunc func(args []string, st *Store) (string, error)
+
+type CommandRunner struct {
+	store  *Store
+	cmdFns map[string]cmdFunc
 }
 
-func MakeCommand(op string, args ...string) Command {
-	return Command{
-		Op:   strings.ToUpper(op),
-		Args: args,
+func NewCommandRunner() *CommandRunner {
+	return &CommandRunner{
+		store:  NewStore(),
+		cmdFns: defaultCmdFns(),
 	}
 }
 
 //
 
-type Reply struct {
-	Status string   `json:"status"`
-	Data   []string `json:"data"`
+func defaultCmdFns() map[string]cmdFunc {
+	return map[string]cmdFunc{
+		"SET": cmdSet,
+		"GET": cmdGet,
+		"DEL": cmdDel,
+	}
 }
 
-func MakeReply(status string, data ...string) Reply {
-	return Reply{
-		Status: status,
-		Data:   data,
+func cmdSet(args []string, st *Store) (string, error) {
+	if len(args) < 2 {
+		return "", errors.New("not enough arguments for SET")
 	}
+	k, v := args[0], args[1]
+	st.Set(k, v)
+	return v, nil
+}
+
+func cmdGet(args []string, st *Store) (string, error) {
+	if len(args) < 1 {
+		return "", errors.New("not enough arguments for GET")
+	}
+	return st.Get(args[0]), nil
+}
+
+func cmdDel(args []string, st *Store) (string, error) {
+	if len(args) < 1 {
+		return "", errors.New("not enough arguments for DEL")
+	}
+	for _, a := range args {
+		st.Del(a)
+	}
+	return "", nil
+}
+
+//
+
+func (b *CommandRunner) RunCommand(c Command) Reply {
+	fn, exists := b.cmdFns[c.Op]
+	if !exists {
+		return MakeReply("ERR", "unknown command")
+	}
+
+	val, err := fn(c.Args, b.store)
+	if err != nil {
+		return MakeReply("ERR", err.Error())
+	}
+	return MakeReply("OK!", val)
 }

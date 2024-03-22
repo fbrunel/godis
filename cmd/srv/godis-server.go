@@ -10,13 +10,13 @@ import (
 )
 
 type CommandHandler struct {
-	Backend  *godis.Backend
+	Runner   *godis.CommandRunner
 	Upgrader websocket.Upgrader
 }
 
-func NewCommandHandler(backend *godis.Backend) *CommandHandler {
+func NewCommandHandler(runner *godis.CommandRunner) *CommandHandler {
 	return &CommandHandler{
-		Backend:  backend,
+		Runner:   runner,
 		Upgrader: websocket.Upgrader{},
 	}
 }
@@ -36,7 +36,7 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("<- recv: %s", c)
 
-		r := h.Backend.EvalCommand(c)
+		r := h.Runner.RunCommand(c)
 
 		err = ws.WriteJSON(r)
 		if err != nil {
@@ -51,7 +51,7 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	be := godis.NewBackend()
+	be := godis.NewCommandRunner()
 	http.Handle("/cmd", NewCommandHandler(be))
 	log.Printf("-- serv: %s", *addr)
 	log.Fatal(http.ListenAndServe(*addr, nil))
