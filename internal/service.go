@@ -1,10 +1,6 @@
 package internal
 
-import (
-	"errors"
-)
-
-type cmdFunc func(args []string, st *Store) (string, error)
+type cmdFunc func(args []string, st *Store) (*Reply, error)
 
 type CommandService struct {
 	store  *Store
@@ -22,49 +18,74 @@ func NewCommandService() *CommandService {
 
 func defaultCmdFns() map[string]cmdFunc {
 	return map[string]cmdFunc{
-		"SET": cmdSet,
-		"GET": cmdGet,
-		"DEL": cmdDel,
+		"SET":    cmdSet,
+		"GET":    cmdGet,
+		"DEL":    cmdDelete,
+		"EXISTS": cmdExists,
 	}
 }
 
-func cmdSet(args []string, st *Store) (string, error) {
+func cmdSet(args []string, st *Store) (*Reply, error) {
 	if len(args) < 2 {
-		return "", errors.New("not enough arguments for SET")
+		return NewReplyErr("not enough arguments for SET"), nil
 	}
+
 	k, v := args[0], args[1]
 	st.Set(k, v)
-	return v, nil
+
+	return NewReplyOnce(v), nil
 }
 
-func cmdGet(args []string, st *Store) (string, error) {
+func cmdGet(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
-		return "", errors.New("not enough arguments for GET")
+		return NewReplyErr("not enough arguments for GET"), nil
 	}
-	return st.Get(args[0]), nil
+
+	k := args[0]
+	if !st.Exists(k) {
+		return NewReplyOnce(nil), nil
+	}
+
+	v := st.Get(args[0])
+	return NewReplyOnce(v), nil
 }
 
-func cmdDel(args []string, st *Store) (string, error) {
+func cmdDelete(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
-		return "", errors.New("not enough arguments for DEL")
+		return NewReplyErr("not enough arguments for DEL"), nil
 	}
-	for _, a := range args {
-		st.Del(a)
+
+	count := 0
+	for _, k := range args {
+		if st.Exists(k) {
+			st.Delete(k)
+			count++
+		}
 	}
-	return "", nil
+
+	return NewReplyOnce(count), nil
+}
+
+func cmdExists(args []string, st *Store) (*Reply, error) {
+	if len(args) < 1 {
+		return NewReplyErr("not enough arguments for EXISTS"), nil
+	}
+
+	return NewReplyOnce(st.Exists(args[0])), nil
 }
 
 //
 
-func (srv *CommandService) ExecCommand(c Command) Reply {
-	fn, exists := srv.cmdFns[c.Op]
+func (srv *CommandService) ExecCommand(c Command) (*Reply, error) {
+	cmd, exists := srv.cmdFns[c.Op]
 	if !exists {
-		return MakeReply("ERR", "unknown command")
+		return NewReplyErr("unknown command"), nil
 	}
 
-	val, err := fn(c.Args, srv.store)
+	rep, err := cmd(c.Args, srv.store)
 	if err != nil {
-		return MakeReply("ERR", err.Error())
+		return nil, err
 	}
-	return MakeReply("OK!", val)
+
+	return rep, nil
 }

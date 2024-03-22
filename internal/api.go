@@ -34,12 +34,12 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("<- recv: %v", c)
 
-		r := h.service.ExecCommand(c)
+		rep, _ := h.service.ExecCommand(c)
 
-		err = ws.WriteJSON(r)
+		err = ws.WriteJSON(*rep)
 		if err != nil {
 			break
 		}
-		log.Printf("-> sent: %v", r)
+		log.Printf("-> sent: %v", *rep)
 	}
 }

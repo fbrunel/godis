@@ -18,14 +18,35 @@ func MakeCommand(op string, args ...string) Command {
 
 //
 
+type Status string
+
+const (
+	StatusOK  = "OK!"
+	StatusErr = "ERR"
+)
+
 type Reply struct {
-	Status string   `json:"status"`
-	Data   []string `json:"data"`
+	Status string `json:"status"`
+	Data   any    `json:"data"`
 }
 
-func MakeReply(status string, data ...string) Reply {
-	return Reply{
-		Status: status,
+func NewReplyMany(data ...any) *Reply {
+	return &Reply{
+		Status: StatusOK,
 		Data:   data,
+	}
+}
+
+func NewReplyOnce(data any) *Reply {
+	return &Reply{
+		Status: StatusOK,
+		Data:   data,
+	}
+}
+
+func NewReplyErr(msg string) *Reply {
+	return &Reply{
+		Status: StatusErr,
+		Data:   msg,
 	}
 }

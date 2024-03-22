@@ -27,8 +27,15 @@ func (st *Store) Get(key string) string {
 	return st.data[key]
 }
 
-func (st *Store) Del(key string) {
+func (st *Store) Delete(key string) {
 	st.mux.Lock()
 	defer st.mux.Unlock()
 	delete(st.data, key)
+}
+
+func (st *Store) Exists(key string) bool {
+	st.mux.RLock()
+	defer st.mux.RUnlock()
+	_, exists := st.data[key]
+	return exists
 }
