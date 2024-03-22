@@ -10,8 +10,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func dial(addr *string) (*websocket.Conn, error) {
-	u := url.URL{Scheme: "ws", Host: *addr, Path: "/cmd"}
+func dial(addr string, path string) (*websocket.Conn, error) {
+	u := url.URL{Scheme: "ws", Host: addr, Path: path}
 	ws, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func main() {
 	//
 
 	ostart := time.Now()
-	ws, err := dial(addr)
+	ws, err := dial(*addr, "/cmd")
 	if err != nil {
 		log.Fatal(err)
 	}
