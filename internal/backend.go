@@ -4,31 +4,31 @@ import (
 	"errors"
 )
 
-type evalFunc func(args []string, st *Store) (string, error)
+type cmdFunc func(args []string, st *Store) (string, error)
 
 type Backend struct {
-	Store   *Store
-	EvalFns map[string]evalFunc
+	store  *Store
+	cmdFns map[string]cmdFunc
 }
 
 func NewBackend() *Backend {
 	return &Backend{
-		Store:   NewStore(),
-		EvalFns: defaultEvalFns(),
+		store:  NewStore(),
+		cmdFns: defaultCmdFns(),
 	}
 }
 
 //
 
-func defaultEvalFns() map[string]evalFunc {
-	return map[string]evalFunc{
-		"SET": evalSet,
-		"GET": evalGet,
-		"DEL": evalDel,
+func defaultCmdFns() map[string]cmdFunc {
+	return map[string]cmdFunc{
+		"SET": cmdSet,
+		"GET": cmdGet,
+		"DEL": cmdDel,
 	}
 }
 
-func evalSet(args []string, st *Store) (string, error) {
+func cmdSet(args []string, st *Store) (string, error) {
 	if len(args) < 2 {
 		return "", errors.New("not enough arguments for SET")
 	}
@@ -37,14 +37,14 @@ func evalSet(args []string, st *Store) (string, error) {
 	return v, nil
 }
 
-func evalGet(args []string, st *Store) (string, error) {
+func cmdGet(args []string, st *Store) (string, error) {
 	if len(args) < 1 {
 		return "", errors.New("not enough arguments for GET")
 	}
 	return st.Get(args[0]), nil
 }
 
-func evalDel(args []string, st *Store) (string, error) {
+func cmdDel(args []string, st *Store) (string, error) {
 	if len(args) < 1 {
 		return "", errors.New("not enough arguments for DEL")
 	}
@@ -57,12 +57,12 @@ func evalDel(args []string, st *Store) (string, error) {
 //
 
 func (b *Backend) EvalCommand(c Command) Reply {
-	fn, exists := b.EvalFns[c.Op]
+	fn, exists := b.cmdFns[c.Op]
 	if !exists {
 		return MakeReply("ERR", "unknown command")
 	}
 
-	val, err := fn(c.Args, b.Store)
+	val, err := fn(c.Args, b.store)
 	if err != nil {
 		return MakeReply("ERR", err.Error())
 	}
