@@ -7,20 +7,20 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type APIServer struct {
+type CommandHandler struct {
 	service  *CommandService
 	upgrader websocket.Upgrader
 }
 
-func NewAPIServer(srv *CommandService) *APIServer {
-	return &APIServer{
-		service:  NewCommandService(),
+func NewCommandHandler(srv *CommandService) *CommandHandler {
+	return &CommandHandler{
+		service:  srv,
 		upgrader: websocket.Upgrader{},
 	}
 }
 
-func (api *APIServer) handleCommand(w http.ResponseWriter, r *http.Request) {
-	ws, err := api.upgrader.Upgrade(w, r, nil)
+func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ws, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
@@ -34,7 +34,7 @@ func (api *APIServer) handleCommand(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("<- recv: %v", c)
 
-		r := api.service.ExecCommand(c)
+		r := h.service.ExecCommand(c)
 
 		err = ws.WriteJSON(r)
 		if err != nil {
@@ -42,10 +42,4 @@ func (api *APIServer) handleCommand(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("-> sent: %v", r)
 	}
-}
-
-func (api *APIServer) Serve(addr string) error {
-	http.HandleFunc("/cmd", api.handleCommand)
-	log.Printf("-- serv: %s", addr)
-	return http.ListenAndServe(addr, nil)
 }

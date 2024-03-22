@@ -4,6 +4,7 @@ import (
 	"flag"
 	godis "godis/internal"
 	"log"
+	"net/http"
 )
 
 func main() {
@@ -12,6 +13,12 @@ func main() {
 	log.SetFlags(0)
 
 	srv := godis.NewCommandService()
-	api := godis.NewAPIServer(srv)
-	log.Fatal(api.Serve(*addr))
+	hdl := godis.NewCommandHandler(srv)
+
+	http.Handle("/cmd", hdl)
+	log.Printf("-- serv: %s", *addr)
+	err := http.ListenAndServe(*addr, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
