@@ -2,34 +2,34 @@ package internal
 
 import "strconv"
 
-type cmdFunc func(args []string, st *Store) (*Reply, error)
+type operation func(args []string, st *Store) (*Reply, error)
 
 type CommandService struct {
-	store  *Store
-	cmdFns map[string]cmdFunc
+	store      *Store
+	operations map[string]operation
 }
 
 func NewCommandService() *CommandService {
 	return &CommandService{
-		store:  NewStore(),
-		cmdFns: defaultCmdFns(),
+		store:      NewStore(),
+		operations: defaultOperations(),
 	}
 }
 
 //
 
-func defaultCmdFns() map[string]cmdFunc {
-	return map[string]cmdFunc{
-		"SET":    cmdSet,
-		"GET":    cmdGet,
-		"DEL":    cmdDelete,
-		"EXISTS": cmdExists,
-		"INCR":   cmdIncr,
-		"DECR":   cmdDecr,
+func defaultOperations() map[string]operation {
+	return map[string]operation{
+		"SET":    operationSet,
+		"GET":    operationGet,
+		"DEL":    operationDelete,
+		"EXISTS": operationExists,
+		"INCR":   operationIncr,
+		"DECR":   operationDecr,
 	}
 }
 
-func cmdSet(args []string, st *Store) (*Reply, error) {
+func operationSet(args []string, st *Store) (*Reply, error) {
 	if len(args) < 2 {
 		return NewReplyErr("not enough arguments for SET"), nil
 	}
@@ -40,7 +40,7 @@ func cmdSet(args []string, st *Store) (*Reply, error) {
 	return NewReplyOK(), nil
 }
 
-func cmdGet(args []string, st *Store) (*Reply, error) {
+func operationGet(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
 		return NewReplyErr("not enough arguments for GET"), nil
 	}
@@ -54,7 +54,7 @@ func cmdGet(args []string, st *Store) (*Reply, error) {
 	return NewReply(v), nil
 }
 
-func cmdDelete(args []string, st *Store) (*Reply, error) {
+func operationDelete(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
 		return NewReplyErr("not enough arguments for DEL"), nil
 	}
@@ -70,7 +70,7 @@ func cmdDelete(args []string, st *Store) (*Reply, error) {
 	return NewReplyInteger(count), nil
 }
 
-func cmdExists(args []string, st *Store) (*Reply, error) {
+func operationExists(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
 		return NewReplyErr("not enough arguments for EXISTS"), nil
 	}
@@ -82,7 +82,7 @@ func cmdExists(args []string, st *Store) (*Reply, error) {
 	return NewReplyInteger(0), nil
 }
 
-func cmdIncr(args []string, st *Store) (*Reply, error) {
+func operationIncr(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
 		return NewReplyErr("not enough arguments for INCR"), nil
 	}
@@ -101,7 +101,7 @@ func cmdIncr(args []string, st *Store) (*Reply, error) {
 	return NewReplyInteger(val), nil
 }
 
-func cmdDecr(args []string, st *Store) (*Reply, error) {
+func operationDecr(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
 		return NewReplyErr("not enough arguments for DECR"), nil
 	}
@@ -123,12 +123,12 @@ func cmdDecr(args []string, st *Store) (*Reply, error) {
 //
 
 func (srv *CommandService) ExecCommand(c Command) (*Reply, error) {
-	cmd, exists := srv.cmdFns[c.Op]
+	op, exists := srv.operations[c.Op]
 	if !exists {
 		return NewReplyErr("unknown command"), nil
 	}
 
-	rep, err := cmd(c.Args, srv.store)
+	rep, err := op(c.Args, srv.store)
 	if err != nil {
 		return nil, err
 	}
