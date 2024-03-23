@@ -1,70 +1,137 @@
 package internal
 
-import (
-	"errors"
-)
+import "strconv"
 
-type cmdFunc func(args []string, st *Store) (string, error)
+type operation func(args []string, st *Store) (*Reply, error)
 
 type CommandService struct {
-	store  *Store
-	cmdFns map[string]cmdFunc
+	store      *Store
+	operations map[string]operation
 }
 
 func NewCommandService() *CommandService {
 	return &CommandService{
-		store:  NewStore(),
-		cmdFns: defaultCmdFns(),
+		store:      NewStore(),
+		operations: defaultOperations(),
 	}
 }
 
 //
 
-func defaultCmdFns() map[string]cmdFunc {
-	return map[string]cmdFunc{
-		"SET": cmdSet,
-		"GET": cmdGet,
-		"DEL": cmdDel,
+func defaultOperations() map[string]operation {
+	return map[string]operation{
+		"SET":    operationSet,
+		"GET":    operationGet,
+		"DEL":    operationDelete,
+		"EXISTS": operationExists,
+		"INCR":   operationIncr,
+		"DECR":   operationDecr,
 	}
 }
 
-func cmdSet(args []string, st *Store) (string, error) {
+func operationSet(args []string, st *Store) (*Reply, error) {
 	if len(args) < 2 {
-		return "", errors.New("not enough arguments for SET")
+		return NewReplyErr("not enough arguments for SET"), nil
 	}
+
 	k, v := args[0], args[1]
 	st.Set(k, v)
-	return v, nil
+
+	return NewReplyOK(), nil
 }
 
-func cmdGet(args []string, st *Store) (string, error) {
+func operationGet(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
-		return "", errors.New("not enough arguments for GET")
+		return NewReplyErr("not enough arguments for GET"), nil
 	}
-	return st.Get(args[0]), nil
+
+	k := args[0]
+	if !st.Exists(k) {
+		return NewReplyNil(), nil
+	}
+
+	v := st.Get(args[0])
+	return NewReply(v), nil
 }
 
-func cmdDel(args []string, st *Store) (string, error) {
+func operationDelete(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
-		return "", errors.New("not enough arguments for DEL")
+		return NewReplyErr("not enough arguments for DEL"), nil
 	}
-	for _, a := range args {
-		st.Del(a)
+
+	var count int64 = 0
+	for _, k := range args {
+		if st.Exists(k) {
+			st.Delete(k)
+			count++
+		}
 	}
-	return "", nil
+
+	return NewReplyInteger(count), nil
+}
+
+func operationExists(args []string, st *Store) (*Reply, error) {
+	if len(args) < 1 {
+		return NewReplyErr("not enough arguments for EXISTS"), nil
+	}
+
+	exists := st.Exists(args[0])
+	if exists {
+		return NewReplyInteger(1), nil
+	}
+	return NewReplyInteger(0), nil
+}
+
+func operationIncr(args []string, st *Store) (*Reply, error) {
+	if len(args) < 1 {
+		return NewReplyErr("not enough arguments for INCR"), nil
+	}
+
+	k := args[0]
+	var val int64 = 0
+	if st.Exists(k) {
+		v, err := strconv.ParseInt(st.Get(k), 10, 64)
+		if err != nil {
+			return NewReplyErr("WRONGTYPE operation against a key holding the wrong kind of value"), nil
+		}
+		val = v
+	}
+	val = val + 1
+	st.Set(k, strconv.FormatInt(val, 10))
+	return NewReplyInteger(val), nil
+}
+
+func operationDecr(args []string, st *Store) (*Reply, error) {
+	if len(args) < 1 {
+		return NewReplyErr("not enough arguments for DECR"), nil
+	}
+
+	k := args[0]
+	var val int64 = 0
+	if st.Exists(k) {
+		v, err := strconv.ParseInt(st.Get(k), 10, 64)
+		if err != nil {
+			return NewReplyErr("WRONGTYPE operation against a key holding the wrong kind of value"), nil
+		}
+		val = v
+	}
+	val = val - 1
+	st.Set(k, strconv.FormatInt(val, 10))
+	return NewReplyInteger(val), nil
 }
 
 //
 
-func (srv *CommandService) ExecCommand(c Command) Reply {
-	fn, exists := srv.cmdFns[c.Op]
+func (srv *CommandService) ExecCommand(c Command) (*Reply, error) {
+	op, exists := srv.operations[c.Op]
 	if !exists {
-		return MakeReply("ERR", "unknown command")
+		return NewReplyErr("unknown command"), nil
 	}
 
-	val, err := fn(c.Args, srv.store)
+	rep, err := op(c.Args, srv.store)
 	if err != nil {
-		return MakeReply("ERR", err.Error())
+		return nil, err
 	}
-	return MakeReply("OK!", val)
+
+	return rep, nil
 }

@@ -18,14 +18,60 @@ func MakeCommand(op string, args ...string) Command {
 
 //
 
+type Type string
+
+const (
+	TypeAck = "+++"
+	TypeNil = "NIL"
+	TypeStr = "STR"
+	TypeInt = "INT"
+	TypeArr = "ARR"
+	TypeErr = "ERR"
+)
+
 type Reply struct {
-	Status string   `json:"status"`
-	Data   []string `json:"data"`
+	Type string `json:"status"`
+	Data any    `json:"data"`
 }
 
-func MakeReply(status string, data ...string) Reply {
-	return Reply{
-		Status: status,
-		Data:   data,
+func NewReplyOK() *Reply {
+	return &Reply{
+		Type: TypeAck,
+		Data: "OK",
+	}
+}
+
+func NewReplyNil() *Reply {
+	return &Reply{
+		Type: TypeNil,
+		Data: nil,
+	}
+}
+
+func NewReply(data string) *Reply {
+	return &Reply{
+		Type: TypeStr,
+		Data: data,
+	}
+}
+
+func NewReplyInteger(i int64) *Reply {
+	return &Reply{
+		Type: TypeInt,
+		Data: i,
+	}
+}
+
+func NewReplyArray(data ...any) *Reply {
+	return &Reply{
+		Type: TypeArr,
+		Data: data,
+	}
+}
+
+func NewReplyErr(msg string) *Reply {
+	return &Reply{
+		Type: TypeErr,
+		Data: msg,
 	}
 }
