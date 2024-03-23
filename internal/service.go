@@ -127,11 +127,5 @@ func (srv *CommandService) ExecCommand(c Command) (*Reply, error) {
 	if !exists {
 		return NewReplyErr("unknown command"), nil
 	}
-
-	rep, err := op(c.Args, srv.store)
-	if err != nil {
-		return nil, err
-	}
-
-	return rep, nil
+	return op(c.Args, srv.store)
 }
