@@ -1,5 +1,7 @@
 package internal
 
+import "strconv"
+
 type cmdFunc func(args []string, st *Store) (*Reply, error)
 
 type CommandService struct {
@@ -22,6 +24,7 @@ func defaultCmdFns() map[string]cmdFunc {
 		"GET":    cmdGet,
 		"DEL":    cmdDelete,
 		"EXISTS": cmdExists,
+		"INCR":   cmdIncr,
 	}
 }
 
@@ -33,7 +36,7 @@ func cmdSet(args []string, st *Store) (*Reply, error) {
 	k, v := args[0], args[1]
 	st.Set(k, v)
 
-	return NewReplyOnce(v), nil
+	return NewReplyOK(), nil
 }
 
 func cmdGet(args []string, st *Store) (*Reply, error) {
@@ -43,11 +46,11 @@ func cmdGet(args []string, st *Store) (*Reply, error) {
 
 	k := args[0]
 	if !st.Exists(k) {
-		return NewReplyOnce(nil), nil
+		return NewReplyNil(), nil
 	}
 
 	v := st.Get(args[0])
-	return NewReplyOnce(v), nil
+	return NewReply(v), nil
 }
 
 func cmdDelete(args []string, st *Store) (*Reply, error) {
@@ -55,7 +58,7 @@ func cmdDelete(args []string, st *Store) (*Reply, error) {
 		return NewReplyErr("not enough arguments for DEL"), nil
 	}
 
-	count := 0
+	var count int64 = 0
 	for _, k := range args {
 		if st.Exists(k) {
 			st.Delete(k)
@@ -63,7 +66,7 @@ func cmdDelete(args []string, st *Store) (*Reply, error) {
 		}
 	}
 
-	return NewReplyOnce(count), nil
+	return NewReplyInteger(count), nil
 }
 
 func cmdExists(args []string, st *Store) (*Reply, error) {
@@ -71,7 +74,30 @@ func cmdExists(args []string, st *Store) (*Reply, error) {
 		return NewReplyErr("not enough arguments for EXISTS"), nil
 	}
 
-	return NewReplyOnce(st.Exists(args[0])), nil
+	exists := st.Exists(args[0])
+	if exists {
+		return NewReplyInteger(1), nil
+	}
+	return NewReplyInteger(0), nil
+}
+
+func cmdIncr(args []string, st *Store) (*Reply, error) {
+	if len(args) < 1 {
+		return NewReplyErr("not enough arguments for INCR"), nil
+	}
+
+	k := args[0]
+	var val int64 = 0
+	if st.Exists(k) {
+		v, err := strconv.ParseInt(st.Get(k), 10, 64)
+		if err != nil {
+			return NewReplyErr("WRONGTYPE operation against a key holding the wrong kind of value"), nil
+		}
+		val = v
+	}
+	val = val + 1
+	st.Set(k, strconv.FormatInt(val, 10))
+	return NewReplyInteger(val), nil
 }
 
 //
