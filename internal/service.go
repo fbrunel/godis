@@ -34,8 +34,7 @@ func operationSet(args []string, st *Store) (*Reply, error) {
 		return NewReplyErr("not enough arguments for SET"), nil
 	}
 
-	k, v := args[0], args[1]
-	st.Set(k, v)
+	st.Set(args[0], args[1])
 
 	return NewReplyOK(), nil
 }
@@ -45,13 +44,11 @@ func operationGet(args []string, st *Store) (*Reply, error) {
 		return NewReplyErr("not enough arguments for GET"), nil
 	}
 
-	k := args[0]
-	if !st.Exists(k) {
+	if !st.Exists(args[0]) {
 		return NewReplyNil(), nil
 	}
 
-	v := st.Get(args[0])
-	return NewReply(v), nil
+	return NewReply(st.Get(args[0])), nil
 }
 
 func operationDelete(args []string, st *Store) (*Reply, error) {
@@ -79,6 +76,7 @@ func operationExists(args []string, st *Store) (*Reply, error) {
 	if exists {
 		return NewReplyInteger(1), nil
 	}
+
 	return NewReplyInteger(0), nil
 }
 
@@ -88,6 +86,7 @@ func operationIncr(args []string, st *Store) (*Reply, error) {
 	}
 
 	k := args[0]
+
 	var val int64 = 0
 	if st.Exists(k) {
 		v, err := strconv.ParseInt(st.Get(k), 10, 64)
@@ -96,8 +95,10 @@ func operationIncr(args []string, st *Store) (*Reply, error) {
 		}
 		val = v
 	}
+
 	val = val + 1
 	st.Set(k, strconv.FormatInt(val, 10))
+
 	return NewReplyInteger(val), nil
 }
 
@@ -107,6 +108,7 @@ func operationDecr(args []string, st *Store) (*Reply, error) {
 	}
 
 	k := args[0]
+
 	var val int64 = 0
 	if st.Exists(k) {
 		v, err := strconv.ParseInt(st.Get(k), 10, 64)
@@ -115,8 +117,10 @@ func operationDecr(args []string, st *Store) (*Reply, error) {
 		}
 		val = v
 	}
+
 	val = val - 1
 	st.Set(k, strconv.FormatInt(val, 10))
+
 	return NewReplyInteger(val), nil
 }
 
