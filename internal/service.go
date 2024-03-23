@@ -25,6 +25,7 @@ func defaultCmdFns() map[string]cmdFunc {
 		"DEL":    cmdDelete,
 		"EXISTS": cmdExists,
 		"INCR":   cmdIncr,
+		"DECR":   cmdDecr,
 	}
 }
 
@@ -96,6 +97,25 @@ func cmdIncr(args []string, st *Store) (*Reply, error) {
 		val = v
 	}
 	val = val + 1
+	st.Set(k, strconv.FormatInt(val, 10))
+	return NewReplyInteger(val), nil
+}
+
+func cmdDecr(args []string, st *Store) (*Reply, error) {
+	if len(args) < 1 {
+		return NewReplyErr("not enough arguments for DECR"), nil
+	}
+
+	k := args[0]
+	var val int64 = 0
+	if st.Exists(k) {
+		v, err := strconv.ParseInt(st.Get(k), 10, 64)
+		if err != nil {
+			return NewReplyErr("WRONGTYPE operation against a key holding the wrong kind of value"), nil
+		}
+		val = v
+	}
+	val = val - 1
 	st.Set(k, strconv.FormatInt(val, 10))
 	return NewReplyInteger(val), nil
 }
