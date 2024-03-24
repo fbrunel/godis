@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"path/filepath"
 	"strconv"
 )
 
@@ -135,11 +136,24 @@ func operationDecr(args []string, st Store) (*Reply, error) {
 }
 
 func operationKeys(args []string, st Store) (*Reply, error) {
-	if len(args) != 0 {
+	if len(args) != 1 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
 
-	return NewReplyArray(st.Keys()), nil
+	keys := st.Keys()
+	pattern := args[0]
+	matches := make([]string, 0, len(keys))
+	for _, k := range keys {
+		match, err := filepath.Match(pattern, k)
+		if err != nil {
+			return NewReplyErr(err.Error()), nil
+		}
+		if match {
+			matches = append(matches, k)
+		}
+	}
+
+	return NewReplyArray(matches), nil
 }
 
 func operationFlushDb(args []string, st Store) (*Reply, error) {
