@@ -28,48 +28,52 @@ const (
 )
 
 type Reply struct {
-	Type string `json:"status"`
-	Data any    `json:"data"`
+	Value any    `json:"value"`
+	Type  string `json:"type"`
+}
+
+func (r *Reply) Values() []any {
+	return r.Value.([]any)
 }
 
 func NewReplyOK() *Reply {
 	return &Reply{
-		Type: TypeAck,
-		Data: "OK",
+		Type:  TypeAck,
+		Value: "OK",
 	}
 }
 
 func NewReplyNil() *Reply {
 	return &Reply{
-		Type: TypeNil,
-		Data: nil,
+		Type:  TypeNil,
+		Value: nil,
 	}
 }
 
-func NewReply(data string) *Reply {
+func NewReply(str string) *Reply {
 	return &Reply{
-		Type: TypeStr,
-		Data: data,
+		Type:  TypeStr,
+		Value: str,
 	}
 }
 
 func NewReplyInteger(i int64) *Reply {
 	return &Reply{
-		Type: TypeInt,
-		Data: i,
+		Type:  TypeInt,
+		Value: i,
 	}
 }
 
-func NewReplyArray(data ...string) *Reply {
+func NewReplyArray(values []string) *Reply {
 	return &Reply{
-		Type: TypeArr,
-		Data: data,
+		Type:  TypeArr,
+		Value: values,
 	}
 }
 
-func NewReplyErr(msg string) *Reply {
+func NewReplyErr(str string) *Reply {
 	return &Reply{
-		Type: TypeErr,
-		Data: msg,
+		Type:  TypeErr,
+		Value: str,
 	}
 }

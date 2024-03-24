@@ -72,22 +72,22 @@ func readPrompt(prefix string) string {
 func fmtReply(r *godis.Reply) string {
 	switch r.Type {
 	case godis.TypeAck:
-		return fmt.Sprintf("%v", r.Data)
+		return fmt.Sprintf("%v", r.Value)
 	case godis.TypeNil:
 		return "(nil)"
 	case godis.TypeStr:
-		return fmt.Sprintf("\"%s\"", r.Data)
+		return fmt.Sprintf("\"%s\"", r.Value)
 	case godis.TypeArr:
-		var arr []string
-		for i, s := range r.Data.([]any) {
-			arr = append(arr, fmt.Sprintf("%d \"%s\"", i+1, s))
+		var lines []string
+		for i, v := range r.Values() {
+			lines = append(lines, fmt.Sprintf("%d \"%s\"", i+1, v.(string)))
 		}
-		if len(arr) == 0 {
+		if len(lines) == 0 {
 			return "(empty)"
 		}
-		return strings.Join(arr, "\n")
+		return strings.Join(lines, "\n")
 	}
-	return fmt.Sprintf("%s %v", r.Type, r.Data)
+	return fmt.Sprintf("%s %v", r.Type, r.Value)
 }
 
 func main() {

@@ -136,7 +136,7 @@ func operationKeys(args []string, st *Store) (*Reply, error) {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
 
-	return NewReplyArray(st.Keys()...), nil
+	return NewReplyArray(st.Keys()), nil
 }
 
 //
