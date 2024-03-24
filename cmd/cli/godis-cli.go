@@ -71,8 +71,10 @@ func readPrompt(prefix string) string {
 
 func fmtReply(r *godis.Reply) string {
 	switch r.Type {
-	case godis.TypeAck, godis.TypeNil, godis.TypeStr:
+	case godis.TypeAck, godis.TypeNil:
 		return fmt.Sprintf("%v", r.Data)
+	case godis.TypeStr:
+		return fmt.Sprintf("\"%s\"", r.Data)
 	}
 	return fmt.Sprintf("%s %v", r.Type, r.Data)
 }
