@@ -60,7 +60,7 @@ func NewReplyInteger(i int64) *Reply {
 	}
 }
 
-func NewReplyArray(data ...any) *Reply {
+func NewReplyArray(data ...string) *Reply {
 	return &Reply{
 		Type: TypeArr,
 		Data: data,

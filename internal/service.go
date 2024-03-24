@@ -26,6 +26,7 @@ func defaultOperations() map[string]operation {
 		"EXISTS": operationExists,
 		"INCR":   operationIncr,
 		"DECR":   operationDecr,
+		"KEYS":   operationKeys,
 	}
 }
 
@@ -128,6 +129,14 @@ func operationDecr(args []string, st *Store) (*Reply, error) {
 	st.Set(k, strconv.FormatInt(val, 10))
 
 	return NewReplyInteger(val), nil
+}
+
+func operationKeys(args []string, st *Store) (*Reply, error) {
+	if len(args) != 0 {
+		return NewReplyErr(ErrWrongArgs), nil
+	}
+
+	return NewReplyArray(st.Keys()...), nil
 }
 
 //

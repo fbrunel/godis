@@ -39,3 +39,13 @@ func (st *Store) Exists(key string) bool {
 	_, exists := st.data[key]
 	return exists
 }
+
+func (st *Store) Keys() []string {
+	st.mux.RLock()
+	defer st.mux.RUnlock()
+	keys := make([]string, 0, len(st.data))
+	for k := range st.data {
+		keys = append(keys, k)
+	}
+	return keys
+}
