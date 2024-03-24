@@ -29,9 +29,15 @@ func defaultOperations() map[string]operation {
 	}
 }
 
+const (
+	ErrUnknownCmd = "unknown command"
+	ErrWrongArgs  = "wrong number of arguments for command"
+	ErrWrongType  = "WRONGTYPE operation against a key holding the wrong kind of value"
+)
+
 func operationSet(args []string, st *Store) (*Reply, error) {
-	if len(args) < 2 {
-		return NewReplyErr("not enough arguments for SET"), nil
+	if len(args) != 2 {
+		return NewReplyErr(ErrWrongArgs), nil
 	}
 
 	st.Set(args[0], args[1])
@@ -40,8 +46,8 @@ func operationSet(args []string, st *Store) (*Reply, error) {
 }
 
 func operationGet(args []string, st *Store) (*Reply, error) {
-	if len(args) < 1 {
-		return NewReplyErr("not enough arguments for GET"), nil
+	if len(args) != 1 {
+		return NewReplyErr(ErrWrongArgs), nil
 	}
 
 	if !st.Exists(args[0]) {
@@ -53,7 +59,7 @@ func operationGet(args []string, st *Store) (*Reply, error) {
 
 func operationDelete(args []string, st *Store) (*Reply, error) {
 	if len(args) < 1 {
-		return NewReplyErr("not enough arguments for DEL"), nil
+		return NewReplyErr(ErrWrongArgs), nil
 	}
 
 	var count int64 = 0
@@ -68,8 +74,8 @@ func operationDelete(args []string, st *Store) (*Reply, error) {
 }
 
 func operationExists(args []string, st *Store) (*Reply, error) {
-	if len(args) < 1 {
-		return NewReplyErr("not enough arguments for EXISTS"), nil
+	if len(args) != 1 {
+		return NewReplyErr(ErrWrongArgs), nil
 	}
 
 	exists := st.Exists(args[0])
@@ -81,8 +87,8 @@ func operationExists(args []string, st *Store) (*Reply, error) {
 }
 
 func operationIncr(args []string, st *Store) (*Reply, error) {
-	if len(args) < 1 {
-		return NewReplyErr("not enough arguments for INCR"), nil
+	if len(args) != 1 {
+		return NewReplyErr(ErrWrongArgs), nil
 	}
 
 	k := args[0]
@@ -91,7 +97,7 @@ func operationIncr(args []string, st *Store) (*Reply, error) {
 	if st.Exists(k) {
 		v, err := strconv.ParseInt(st.Get(k), 10, 64)
 		if err != nil {
-			return NewReplyErr("WRONGTYPE operation against a key holding the wrong kind of value"), nil
+			return NewReplyErr(ErrWrongType), nil
 		}
 		val = v
 	}
@@ -103,8 +109,8 @@ func operationIncr(args []string, st *Store) (*Reply, error) {
 }
 
 func operationDecr(args []string, st *Store) (*Reply, error) {
-	if len(args) < 1 {
-		return NewReplyErr("not enough arguments for DECR"), nil
+	if len(args) != 1 {
+		return NewReplyErr(ErrWrongArgs), nil
 	}
 
 	k := args[0]
@@ -113,7 +119,7 @@ func operationDecr(args []string, st *Store) (*Reply, error) {
 	if st.Exists(k) {
 		v, err := strconv.ParseInt(st.Get(k), 10, 64)
 		if err != nil {
-			return NewReplyErr("WRONGTYPE operation against a key holding the wrong kind of value"), nil
+			return NewReplyErr(ErrWrongType), nil
 		}
 		val = v
 	}
@@ -129,7 +135,7 @@ func operationDecr(args []string, st *Store) (*Reply, error) {
 func (srv *CommandService) ExecCommand(c Command) (*Reply, error) {
 	op, exists := srv.operations[c.Op]
 	if !exists {
-		return NewReplyErr("unknown command"), nil
+		return NewReplyErr(ErrUnknownCmd), nil
 	}
 	return op(c.Args, srv.store)
 }

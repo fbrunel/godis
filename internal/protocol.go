@@ -18,8 +18,6 @@ func MakeCommand(op string, args ...string) Command {
 
 //
 
-type Type string
-
 const (
 	TypeAck = "ACK"
 	TypeNil = "NIL"
