@@ -135,6 +135,24 @@ func operationDecr(args []string, st Store) (*Reply, error) {
 	return NewReplyInteger(val), nil
 }
 
+// pattern:
+//
+//	{ term }
+//
+// term:
+//
+//	'*'         matches any sequence of non-Separator characters
+//	'?'         matches any single non-Separator character
+//	'[' [ '^' ] { character-range } ']'
+//	            character class (must be non-empty)
+//	c           matches character c (c != '*', '?', '\\', '[')
+//	'\\' c      matches character c
+//
+// character-range:
+//
+//	c           matches character c (c != '\\', '-', ']')
+//	'\\' c      matches character c
+//	lo '-' hi   matches character c for lo <= c <= hi
 func operationKeys(args []string, st Store) (*Reply, error) {
 	if len(args) != 1 {
 		return NewReplyErr(ErrWrongArgs), nil
