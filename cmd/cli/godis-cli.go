@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"flag"
+	"fmt"
 	godis "godis/internal"
+	"io"
 	"log"
 	"net/url"
-	"time"
+	"os"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -20,52 +24,98 @@ func dial(addr string, path string) (*websocket.Conn, error) {
 }
 
 func hangup(ws *websocket.Conn) error {
-	return ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	return ws.WriteMessage(
+		websocket.CloseMessage,
+		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+}
+
+func replyReader(ws *websocket.Conn, chreply chan<- godis.Reply, cherr chan<- error) {
+	for {
+		var r godis.Reply
+		err := ws.ReadJSON(&r)
+		if err != nil {
+			cherr <- err
+			break
+		}
+		log.Printf("<- recv: %v", r)
+		chreply <- r
+	}
+}
+
+func commandWriter(ws *websocket.Conn, chcmd <-chan godis.Command, cherr chan<- error) {
+	for {
+		cmd := <-chcmd
+		err := ws.WriteJSON(cmd)
+		if err != nil {
+			cherr <- err
+			break
+		}
+		log.Printf("-> sent: %v", cmd)
+	}
+}
+
+func readPrompt(prefix string) string {
+	var str string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprint(os.Stdout, prefix)
+		str, _ = r.ReadString('\n')
+		str = strings.TrimSpace(str)
+		if str != "" {
+			break
+		}
+	}
+	return str
+}
+
+func fmtReply(r *godis.Reply) string {
+	switch r.Type {
+	case godis.TypeAck, godis.TypeStr:
+		return fmt.Sprintf("%v", r.Data)
+	}
+	return fmt.Sprintf("%s %v", r.Type, r.Data)
 }
 
 func main() {
-	addr := flag.String("addr", ":8080", "")
+	addr := flag.String("addr", ":8080", "server address:port")
+	verb := flag.Bool("v", false, "verbose")
 	flag.Parse()
 	log.SetFlags(0)
 
-	args := flag.Args()
-	if len(args) == 0 {
-		return
+	if !*verb {
+		log.SetOutput(io.Discard)
 	}
 
 	//
 
-	ostart := time.Now()
 	ws, err := dial(*addr, "/cmd")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer hangup(ws)
 
-	istart := time.Now()
-	done := make(chan struct{})
-	go func() {
-		for {
-			var r godis.Reply
-			err := ws.ReadJSON(&r)
-			if err != nil {
-				close(done)
-				return
-			}
-			log.Printf("<- recv: %v", r)
-			log.Printf("-- time: %s", time.Since(istart))
+	cherr := make(chan error, 1)
+	chreply := make(chan godis.Reply)
+	go replyReader(ws, chreply, cherr)
+
+	chcmd := make(chan godis.Command)
+	go commandWriter(ws, chcmd, cherr)
+
+	for {
+		prompt := readPrompt("> ")
+		if prompt == "exit" {
+			break
 		}
-	}()
+		tokens := strings.Split(prompt, " ")
+		chcmd <- godis.MakeCommand(tokens[0], tokens[1:]...)
 
-	c := godis.MakeCommand(args[0], args[1:]...)
-	err = ws.WriteJSON(c)
-	if err != nil {
-		log.Fatal(err)
+		select {
+		case r := <-chreply:
+			fmt.Println(fmtReply(&r))
+		case err := <-cherr:
+			fmt.Printf("EE %v", err)
+			return
+		}
 	}
-	log.Printf("-> sent: %v", c)
 
 	hangup(ws)
-	<-done
-
-	log.Printf("-- time: %s", time.Since(ostart))
 }
