@@ -70,7 +70,7 @@ func readPrompt(prefix string) string {
 
 func fmtReply(r *godis.Reply) string {
 	switch r.Type {
-	case godis.TypeAck, godis.TypeStr:
+	case godis.TypeAck, godis.TypeNil, godis.TypeStr:
 		return fmt.Sprintf("%v", r.Data)
 	}
 	return fmt.Sprintf("%s %v", r.Type, r.Data)
@@ -90,7 +90,8 @@ func main() {
 
 	ws, err := dial(*addr, "/cmd")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("EE %v", err)
+		os.Exit(1)
 	}
 
 	cherr := make(chan error, 1)
@@ -100,21 +101,28 @@ func main() {
 	chcmd := make(chan godis.Command)
 	go commandWriter(ws, chcmd, cherr)
 
-	for {
-		prompt := readPrompt("> ")
-		if prompt == "exit" {
-			break
-		}
-		tokens := strings.Split(prompt, " ")
-		chcmd <- godis.MakeCommand(tokens[0], tokens[1:]...)
+	chdone := make(chan struct{})
+	go func() {
+		for {
+			prompt := readPrompt("> ")
+			if prompt == "exit" {
+				close(chdone)
+				return
+			}
+			tokens := strings.Split(prompt, " ")
+			chcmd <- godis.MakeCommand(tokens[0], tokens[1:]...)
 
-		select {
-		case r := <-chreply:
+			r := <-chreply
 			fmt.Println(fmtReply(&r))
-		case err := <-cherr:
-			fmt.Printf("EE %v", err)
-			return
 		}
+	}()
+
+	select {
+	case <-chdone:
+		break
+	case err := <-cherr:
+		fmt.Printf("EE %v", err)
+		os.Exit(1)
 	}
 
 	hangup(ws)
