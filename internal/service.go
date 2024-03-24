@@ -1,17 +1,19 @@
 package internal
 
-import "strconv"
+import (
+	"strconv"
+)
 
-type operation func(args []string, st *Store) (*Reply, error)
+type operation func(args []string, st Store) (*Reply, error)
 
 type CommandService struct {
-	store      *Store
+	store      Store
 	operations map[string]operation
 }
 
-func NewCommandService() *CommandService {
+func NewCommandService(store Store) *CommandService {
 	return &CommandService{
-		store:      NewStore(),
+		store:      store,
 		operations: defaultOperations(),
 	}
 }
@@ -37,7 +39,7 @@ const (
 	ErrWrongType  = "WRONGTYPE operation against a key holding the wrong kind of value"
 )
 
-func operationSet(args []string, st *Store) (*Reply, error) {
+func operationSet(args []string, st Store) (*Reply, error) {
 	if len(args) != 2 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
@@ -47,7 +49,7 @@ func operationSet(args []string, st *Store) (*Reply, error) {
 	return NewReplyOK(), nil
 }
 
-func operationGet(args []string, st *Store) (*Reply, error) {
+func operationGet(args []string, st Store) (*Reply, error) {
 	if len(args) != 1 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
@@ -59,7 +61,7 @@ func operationGet(args []string, st *Store) (*Reply, error) {
 	return NewReply(st.Get(args[0])), nil
 }
 
-func operationDelete(args []string, st *Store) (*Reply, error) {
+func operationDelete(args []string, st Store) (*Reply, error) {
 	if len(args) < 1 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
@@ -75,7 +77,7 @@ func operationDelete(args []string, st *Store) (*Reply, error) {
 	return NewReplyInteger(count), nil
 }
 
-func operationExists(args []string, st *Store) (*Reply, error) {
+func operationExists(args []string, st Store) (*Reply, error) {
 	if len(args) != 1 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
@@ -88,7 +90,7 @@ func operationExists(args []string, st *Store) (*Reply, error) {
 	return NewReplyInteger(0), nil
 }
 
-func operationIncr(args []string, st *Store) (*Reply, error) {
+func operationIncr(args []string, st Store) (*Reply, error) {
 	if len(args) != 1 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
@@ -110,7 +112,7 @@ func operationIncr(args []string, st *Store) (*Reply, error) {
 	return NewReplyInteger(val), nil
 }
 
-func operationDecr(args []string, st *Store) (*Reply, error) {
+func operationDecr(args []string, st Store) (*Reply, error) {
 	if len(args) != 1 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
@@ -132,7 +134,7 @@ func operationDecr(args []string, st *Store) (*Reply, error) {
 	return NewReplyInteger(val), nil
 }
 
-func operationKeys(args []string, st *Store) (*Reply, error) {
+func operationKeys(args []string, st Store) (*Reply, error) {
 	if len(args) != 0 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
@@ -140,7 +142,7 @@ func operationKeys(args []string, st *Store) (*Reply, error) {
 	return NewReplyArray(st.Keys()), nil
 }
 
-func operationFlushDb(args []string, st *Store) (*Reply, error) {
+func operationFlushDb(args []string, st Store) (*Reply, error) {
 	if len(args) != 0 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}

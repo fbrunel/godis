@@ -12,7 +12,8 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	srv := godis.NewCommandService()
+	sto := godis.NewStandardStore()
+	srv := godis.NewCommandService(sto)
 	hdl := godis.NewCommandHandler(srv)
 
 	http.Handle("/cmd", hdl)
