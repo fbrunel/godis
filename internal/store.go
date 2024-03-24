@@ -49,3 +49,9 @@ func (st *Store) Keys() []string {
 	}
 	return keys
 }
+
+func (st *Store) Flush() {
+	st.mux.Lock()
+	defer st.mux.Unlock()
+	clear(st.data)
+}

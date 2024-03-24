@@ -20,13 +20,14 @@ func NewCommandService() *CommandService {
 
 func defaultOperations() map[string]operation {
 	return map[string]operation{
-		"SET":    operationSet,
-		"GET":    operationGet,
-		"DEL":    operationDelete,
-		"EXISTS": operationExists,
-		"INCR":   operationIncr,
-		"DECR":   operationDecr,
-		"KEYS":   operationKeys,
+		"SET":     operationSet,
+		"GET":     operationGet,
+		"DEL":     operationDelete,
+		"EXISTS":  operationExists,
+		"INCR":    operationIncr,
+		"DECR":    operationDecr,
+		"KEYS":    operationKeys,
+		"FLUSHDB": operationFlushDb,
 	}
 }
 
@@ -137,6 +138,16 @@ func operationKeys(args []string, st *Store) (*Reply, error) {
 	}
 
 	return NewReplyArray(st.Keys()), nil
+}
+
+func operationFlushDb(args []string, st *Store) (*Reply, error) {
+	if len(args) != 0 {
+		return NewReplyErr(ErrWrongArgs), nil
+	}
+
+	st.Flush()
+
+	return NewReplyOK(), nil
 }
 
 //
