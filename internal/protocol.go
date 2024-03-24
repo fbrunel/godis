@@ -21,7 +21,7 @@ func MakeCommand(op string, args ...string) Command {
 type Type string
 
 const (
-	TypeAck = "+++"
+	TypeAck = "ACK"
 	TypeNil = "NIL"
 	TypeStr = "STR"
 	TypeInt = "INT"
