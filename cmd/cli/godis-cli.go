@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/shlex"
 	"github.com/gorilla/websocket"
 )
 
@@ -109,7 +110,7 @@ func main() {
 				close(chdone)
 				return
 			}
-			tokens := strings.Split(prompt, " ")
+			tokens, _ := shlex.Split(prompt)
 			chcmd <- godis.MakeCommand(tokens[0], tokens[1:]...)
 
 			r := <-chreply

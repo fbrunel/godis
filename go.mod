@@ -4,4 +4,7 @@ go 1.22.1
 
 require github.com/gorilla/websocket v1.5.1
 
-require golang.org/x/net v0.17.0 // indirect
+require (
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
+	golang.org/x/net v0.17.0 // indirect
+)
