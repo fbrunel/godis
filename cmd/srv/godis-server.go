@@ -10,7 +10,7 @@ import (
 func main() {
 	addr := flag.String("addr", ":8080", "")
 	flag.Parse()
-	log.SetFlags(0)
+	log.SetFlags(log.Ldate | log.Lmicroseconds | log.LUTC)
 
 	store := godis.NewStandardStore()
 	service := godis.NewCommandService(store)

@@ -3,6 +3,7 @@ package internal
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -37,13 +38,15 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("<- recv: %v", c)
 
+		start := time.Now()
 		rep, _ := h.service.ExecCommand(c)
+		delta := time.Since(start)
 
 		err = ws.WriteJSON(*rep)
 		if err != nil {
 			log.Printf("EE (%s) %v", ws.RemoteAddr(), err)
 			break
 		}
-		log.Printf("-> sent: %v", *rep)
+		log.Printf("-> sent: %v (%v)", *rep, delta)
 	}
 }
