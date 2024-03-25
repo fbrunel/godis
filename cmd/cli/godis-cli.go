@@ -7,55 +7,13 @@ import (
 	godis "godis/internal"
 	"io"
 	"log"
-	"net/url"
 	"os"
 	"strings"
 
 	"github.com/google/shlex"
-	"github.com/gorilla/websocket"
 )
 
-func dial(addr string, path string) (*websocket.Conn, error) {
-	u := url.URL{Scheme: "ws", Host: addr, Path: path}
-	ws, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	return ws, nil
-}
-
-func hangup(ws *websocket.Conn) error {
-	return ws.WriteMessage(
-		websocket.CloseMessage,
-		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-}
-
-func replyReader(ws *websocket.Conn, replych chan<- godis.Reply, errch chan<- error) {
-	for {
-		var r godis.Reply
-		err := ws.ReadJSON(&r)
-		if err != nil {
-			errch <- err
-			break
-		}
-		log.Printf("<- recv: %v", r)
-		replych <- r
-	}
-}
-
-func commandWriter(ws *websocket.Conn, cmdch <-chan godis.Command, errch chan<- error) {
-	for {
-		cmd := <-cmdch
-		err := ws.WriteJSON(cmd)
-		if err != nil {
-			errch <- err
-			break
-		}
-		log.Printf("-> sent: %v", cmd)
-	}
-}
-
-func readPrompt(prefix string) string {
+func ReadPrompt(prefix string) string {
 	var str string
 	r := bufio.NewReader(os.Stdin)
 	for {
@@ -69,7 +27,7 @@ func readPrompt(prefix string) string {
 	return str
 }
 
-func fmtReply(r *godis.Reply) string {
+func FmtReply(r *godis.Reply) string {
 	switch r.Type {
 	case godis.TypeAck:
 		return fmt.Sprintf("%v", r.Value)
@@ -90,6 +48,8 @@ func fmtReply(r *godis.Reply) string {
 	return fmt.Sprintf("%s %v", r.Type, r.Value)
 }
 
+//
+
 func main() {
 	addr := flag.String("addr", ":8080", "server address:port")
 	verb := flag.Bool("v", false, "verbose")
@@ -102,42 +62,33 @@ func main() {
 
 	//
 
-	ws, err := dial(*addr, "/cmd")
+	client := godis.NewClient(*addr)
+
+	err := client.Dial()
 	if err != nil {
-		fmt.Printf("EE %v", err)
+		fmt.Println("EE", err)
 		os.Exit(1)
 	}
 
-	var (
-		errch   = make(chan error)
-		replych = make(chan godis.Reply)
-		cmdch   = make(chan godis.Command)
-		donech  = make(chan struct{})
-	)
-
-	go replyReader(ws, replych, errch)
-	go commandWriter(ws, cmdch, errch)
+	donech := make(chan struct{})
 	go func() {
 		for {
-			prompt := readPrompt("> ")
+			prompt := ReadPrompt("> ")
 			if prompt == "exit" {
 				close(donech)
 				return
 			}
 			tokens, _ := shlex.Split(prompt)
-			cmdch <- godis.MakeCommand(tokens[0], tokens[1:]...)
-			reply := <-replych
-			fmt.Println(fmtReply(&reply))
+			reply, err := client.SendCommand(tokens[0], tokens[1:]...)
+			if err != nil {
+				fmt.Println("EE", err)
+				close(donech)
+				return
+			}
+			fmt.Println(FmtReply(reply))
 		}
 	}()
 
-	select {
-	case <-donech:
-		break
-	case err := <-errch:
-		fmt.Printf("EE %v", err)
-		os.Exit(1)
-	}
-
-	hangup(ws)
+	<-donech
+	client.Hangup()
 }
