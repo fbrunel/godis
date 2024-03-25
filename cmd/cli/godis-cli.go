@@ -109,7 +109,7 @@ func main() {
 	}
 
 	var (
-		errch   = make(chan error, 1)
+		errch   = make(chan error)
 		replych = make(chan godis.Reply)
 		cmdch   = make(chan godis.Command)
 		donech  = make(chan struct{})
