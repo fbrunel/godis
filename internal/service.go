@@ -79,16 +79,18 @@ func operationDelete(args []string, st Store) (*Reply, error) {
 }
 
 func operationExists(args []string, st Store) (*Reply, error) {
-	if len(args) != 1 {
+	if len(args) < 1 {
 		return NewReplyErr(ErrWrongArgs), nil
 	}
 
-	exists := st.Exists(args[0])
-	if exists {
-		return NewReplyInteger(1), nil
+	var count int64 = 0
+	for _, k := range args {
+		if st.Exists(k) {
+			count++
+		}
 	}
 
-	return NewReplyInteger(0), nil
+	return NewReplyInteger(count), nil
 }
 
 func operationIncr(args []string, st Store) (*Reply, error) {
