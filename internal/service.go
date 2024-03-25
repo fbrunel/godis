@@ -19,12 +19,11 @@ func NewCommandService(store Store) *CommandService {
 	}
 }
 
-//
-
 func defaultOperations() map[string]operation {
 	return map[string]operation{
 		"SET":     operationSet,
 		"GET":     operationGet,
+		"MGET":    operationMGet,
 		"DEL":     operationDelete,
 		"EXISTS":  operationExists,
 		"INCR":    operationIncr,
@@ -60,6 +59,23 @@ func operationGet(args []string, st Store) (*Reply, error) {
 	}
 
 	return NewReply(st.Get(args[0])), nil
+}
+
+func operationMGet(args []string, st Store) (*Reply, error) {
+	if len(args) < 1 {
+		return NewReplyErr(ErrWrongArgs), nil
+	}
+
+	keys := make([]any, 0, len(args))
+	for _, k := range args {
+		if st.Exists(k) {
+			keys = append(keys, st.Get(k))
+		} else {
+			keys = append(keys, nil)
+		}
+	}
+
+	return NewReplyArray(keys), nil
 }
 
 func operationDelete(args []string, st Store) (*Reply, error) {
@@ -162,7 +178,7 @@ func operationKeys(args []string, st Store) (*Reply, error) {
 
 	keys := st.Keys()
 	pattern := args[0]
-	matches := make([]string, 0, len(keys))
+	matches := make([]any, 0, len(keys))
 	for _, k := range keys {
 		match, err := filepath.Match(pattern, k)
 		if err != nil {

@@ -38,7 +38,16 @@ func FmtReply(r *godis.Reply) string {
 	case godis.TypeArr:
 		var lines []string
 		for i, v := range r.Values() {
-			lines = append(lines, fmt.Sprintf("%d \"%s\"", i+1, v.(string)))
+			var vfmt string
+			switch v.(type) {
+			case nil:
+				vfmt = "(nil)"
+			case string:
+				vfmt = fmt.Sprintf("\"%v\"", v)
+			default:
+				vfmt = fmt.Sprintf("%v", v)
+			}
+			lines = append(lines, fmt.Sprintf("%d "+vfmt, i+1))
 		}
 		if len(lines) == 0 {
 			return "(empty)"
