@@ -12,11 +12,11 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	sto := godis.NewStandardStore()
-	srv := godis.NewCommandService(sto)
-	hdl := godis.NewCommandHandler(srv)
+	store := godis.NewStandardStore()
+	service := godis.NewCommandService(store)
+	handle := godis.NewCommandHandler(service)
 
-	http.Handle("/cmd", hdl)
+	http.Handle("/cmd", handle)
 	log.Printf("-- serv: %s", *addr)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {

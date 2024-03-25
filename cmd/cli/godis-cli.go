@@ -30,25 +30,25 @@ func hangup(ws *websocket.Conn) error {
 		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
-func replyReader(ws *websocket.Conn, chreply chan<- godis.Reply, cherr chan<- error) {
+func replyReader(ws *websocket.Conn, replych chan<- godis.Reply, errch chan<- error) {
 	for {
 		var r godis.Reply
 		err := ws.ReadJSON(&r)
 		if err != nil {
-			cherr <- err
+			errch <- err
 			break
 		}
 		log.Printf("<- recv: %v", r)
-		chreply <- r
+		replych <- r
 	}
 }
 
-func commandWriter(ws *websocket.Conn, chcmd <-chan godis.Command, cherr chan<- error) {
+func commandWriter(ws *websocket.Conn, cmdch <-chan godis.Command, errch chan<- error) {
 	for {
-		cmd := <-chcmd
+		cmd := <-cmdch
 		err := ws.WriteJSON(cmd)
 		if err != nil {
-			cherr <- err
+			errch <- err
 			break
 		}
 		log.Printf("-> sent: %v", cmd)
@@ -108,33 +108,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	cherr := make(chan error, 1)
-	chreply := make(chan godis.Reply)
-	go replyReader(ws, chreply, cherr)
+	var (
+		errch   = make(chan error, 1)
+		replych = make(chan godis.Reply)
+		cmdch   = make(chan godis.Command)
+		donech  = make(chan struct{})
+	)
 
-	chcmd := make(chan godis.Command)
-	go commandWriter(ws, chcmd, cherr)
-
-	chdone := make(chan struct{})
+	go replyReader(ws, replych, errch)
+	go commandWriter(ws, cmdch, errch)
 	go func() {
 		for {
 			prompt := readPrompt("> ")
 			if prompt == "exit" {
-				close(chdone)
+				close(donech)
 				return
 			}
 			tokens, _ := shlex.Split(prompt)
-			chcmd <- godis.MakeCommand(tokens[0], tokens[1:]...)
-
-			r := <-chreply
-			fmt.Println(fmtReply(&r))
+			cmdch <- godis.MakeCommand(tokens[0], tokens[1:]...)
+			reply := <-replych
+			fmt.Println(fmtReply(&reply))
 		}
 	}()
 
 	select {
-	case <-chdone:
+	case <-donech:
 		break
-	case err := <-cherr:
+	case err := <-errch:
 		fmt.Printf("EE %v", err)
 		os.Exit(1)
 	}
