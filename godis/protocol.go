@@ -5,8 +5,8 @@ import (
 )
 
 type Command struct {
-	Op   string   `json:"op"`
-	Args []string `json:"args"`
+	Op   string   `json:"o"`
+	Args []string `json:"a"`
 }
 
 func MakeCommand(op string, args ...string) Command {
@@ -28,8 +28,8 @@ const (
 )
 
 type Reply struct {
-	Value any    `json:"value"`
-	Type  string `json:"type"`
+	Value any    `json:"v"`
+	Type  string `json:"t"`
 }
 
 func (r *Reply) Values() []any {
