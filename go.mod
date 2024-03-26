@@ -1,4 +1,4 @@
-module godis
+module github.com/fbrunel/godis
 
 go 1.22.1
 

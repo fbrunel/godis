@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"godis/godis"
 	"io"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/fbrunel/godis/godis"
 
 	"github.com/google/shlex"
 )

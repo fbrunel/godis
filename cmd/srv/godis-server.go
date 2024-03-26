@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
-	"godis/godis"
 	"log"
 	"net/http"
+
+	"github.com/fbrunel/godis/godis"
 )
 
 func main() {
