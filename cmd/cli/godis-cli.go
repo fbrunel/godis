@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	godis "godis/internal"
+	"godis/godis"
 	"io"
 	"log"
 	"os"

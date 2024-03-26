@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	godis "godis/internal"
+	"godis/godis"
 	"log"
 	"net/http"
 )
