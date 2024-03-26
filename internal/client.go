@@ -3,6 +3,7 @@ package internal
 import (
 	"log"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -37,6 +38,7 @@ func (c *Client) Hangup() error {
 }
 
 func (c *Client) SendCommand(op string, args ...string) (*Reply, error) {
+	start := time.Now()
 	cmd := MakeCommand(op, args...)
 	err := c.conn.WriteJSON(cmd)
 	if err != nil {
@@ -49,6 +51,6 @@ func (c *Client) SendCommand(op string, args ...string) (*Reply, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("<- recv: %v", rep)
+	log.Printf("<- recv: %v (%v)", rep, time.Since(start))
 	return &rep, nil
 }
