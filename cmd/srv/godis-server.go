@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	addr := flag.String("addr", ":8080", "")
+	addr := flag.String("addr", ":8080", "server address:port")
 	flag.Parse()
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.LUTC)
 
