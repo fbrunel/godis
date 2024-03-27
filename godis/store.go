@@ -10,6 +10,7 @@ type Store interface {
 	Delete(key string)
 	Exists(key string) bool
 	Keys() []string
+	Size() int64
 	Flush()
 }
 
@@ -59,6 +60,12 @@ func (st *StandardStore) Keys() []string {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+func (st *StandardStore) Size() int64 {
+	st.mux.RLock()
+	defer st.mux.RUnlock()
+	return int64(len(st.hmap))
 }
 
 func (st *StandardStore) Flush() {

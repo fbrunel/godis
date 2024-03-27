@@ -29,6 +29,7 @@ func defaultOperations() map[string]operation {
 		"INCR":    operationIncr,
 		"DECR":    operationDecr,
 		"KEYS":    operationKeys,
+		"DBSIZE":  operationDbSize,
 		"FLUSHDB": operationFlushDb,
 	}
 }
@@ -190,6 +191,13 @@ func operationKeys(args []string, st Store) (*Reply, error) {
 	}
 
 	return NewReplyArray(matches), nil
+}
+
+func operationDbSize(args []string, st Store) (*Reply, error) {
+	if len(args) != 0 {
+		return NewReplyErr(ErrWrongArgs), nil
+	}
+	return NewReplyInteger(st.Size()), nil
 }
 
 func operationFlushDb(args []string, st Store) (*Reply, error) {
