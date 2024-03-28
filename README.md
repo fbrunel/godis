@@ -12,8 +12,10 @@ For example, sending a command to the server to set the key "example" to the
 string "hello, world" will respond with the reply of type ACK (for acknowledge)
 with the value "OK".
 
-    { "o": "SET", [ "example" "hello, world" ] }
-    { "t": "ACK", "v": "OK" }
+```json
+{ "o": "SET", [ "example" "hello, world" ] }
+{ "t": "ACK", "v": "OK" }
+```
 
 ### Commands
 
