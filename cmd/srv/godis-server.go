@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"log"
-	"net/http"
 
 	"github.com/fbrunel/godis/godis"
 )
@@ -13,13 +12,8 @@ func main() {
 	flag.Parse()
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.LUTC)
 
-	store := godis.NewStandardStore()
-	service := godis.NewCommandService(store)
-	handle := godis.NewCommandHandler(service)
-
-	http.Handle("/cmd", handle)
-	log.Printf("-- serv: %s", *addr)
-	err := http.ListenAndServe(*addr, nil)
+	server := godis.NewServer(*addr)
+	err := server.Serve()
 	if err != nil {
 		log.Fatal(err)
 	}
