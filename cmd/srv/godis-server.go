@@ -13,8 +13,8 @@ func main() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.LUTC)
 
 	server := godis.NewServer(*addr)
-	err := server.Serve()
+	err := server.Start()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("EE %v", err)
 	}
 }
