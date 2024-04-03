@@ -62,7 +62,6 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		hangup(conn)
 		<-time.After(500 * time.Millisecond)
 	case <-errch:
-		log.Printf("DONE")
 	}
 }
 
