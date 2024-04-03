@@ -1,7 +1,9 @@
 package godis
 
 import (
+	"fmt"
 	"path/filepath"
+	"runtime"
 	"strconv"
 )
 
@@ -31,6 +33,7 @@ func defaultOperations() map[string]operation {
 		"KEYS":    operationKeys,
 		"DBSIZE":  operationDbSize,
 		"FLUSHDB": operationFlushDb,
+		"INFO":    operationInfo,
 	}
 }
 
@@ -208,6 +211,18 @@ func operationFlushDb(args []string, st Store) (*Reply, error) {
 	st.Flush()
 
 	return NewReplyOK(), nil
+}
+
+func operationInfo(args []string, st Store) (*Reply, error) {
+	if len(args) != 0 {
+		return NewReplyErr(ErrWrongArgs), nil
+	}
+
+	mem := runtime.MemStats{}
+	runtime.ReadMemStats(&mem)
+	fmt := fmt.Sprintf("HeapAlloc: %d bytes", mem.HeapAlloc)
+
+	return NewReply(fmt), nil
 }
 
 //
