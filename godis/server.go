@@ -10,20 +10,34 @@ import (
 	"time"
 )
 
-type Server struct {
-	http     http.Server
-	urlpath  string
-	dumpfile string
-	store    *StandardStore
-	service  *CommandService
-	handler  *CommandHandler
+type Options struct {
+	Addr     string
+	URLPath  string
+	Dumpfile string
 }
 
-func NewServer(addr string) *Server {
+func DefaultOptions() Options {
+	return Options{
+		Addr:     ":8080",
+		URLPath:  "/cmd",
+		Dumpfile: "/tmp/godis.dump",
+	}
+}
+
+//
+
+type Server struct {
+	opt     Options
+	http    http.Server
+	store   *StandardStore
+	service *CommandService
+	handler *CommandHandler
+}
+
+func NewServer(opt Options) *Server {
 	return &Server{
-		http:     http.Server{Addr: addr},
-		urlpath:  "/cmd",
-		dumpfile: "/tmp/godis.dump",
+		opt:  opt,
+		http: http.Server{Addr: opt.Addr},
 	}
 }
 
@@ -32,7 +46,7 @@ func (s *Server) Start() error {
 
 	errch := make(chan error)
 	go func() {
-		log.Printf("-- serv: %s", s.http.Addr)
+		log.Printf("-- serv: %s", s.opt.Addr)
 		err := s.http.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			errch <- err
@@ -50,8 +64,8 @@ func (s *Server) Start() error {
 //
 
 func (s *Server) init() {
-	log.Printf("-- load: %s", s.dumpfile)
-	store, err := LoadStoreFromFile(s.dumpfile)
+	log.Printf("-- load: %s", s.opt.Dumpfile)
+	store, err := LoadStoreFromFile(s.opt.Dumpfile)
 	if err != nil {
 		log.Printf("EE %v", err)
 		store = NewStandardStore()
@@ -64,7 +78,7 @@ func (s *Server) init() {
 	s.handler = NewCommandHandler(ctx, s.service)
 
 	router := http.NewServeMux()
-	router.Handle(s.urlpath, s.handler)
+	router.Handle(s.opt.URLPath, s.handler)
 	s.http.Handler = router
 	s.http.RegisterOnShutdown(func() { cancel() })
 }
@@ -76,8 +90,8 @@ func (s *Server) shutdown() error {
 		return err
 	}
 
-	log.Printf("-- save: %s", s.dumpfile)
-	err = SaveStoreToFile(s.store, s.dumpfile)
+	log.Printf("-- save: %s", s.opt.Dumpfile)
+	err = SaveStoreToFile(s.store, s.opt.Dumpfile)
 	if err != nil {
 		return err
 	}
