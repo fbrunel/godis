@@ -4,6 +4,8 @@ import (
 	"encoding/gob"
 	"io"
 	"os"
+
+	"github.com/golang/snappy"
 )
 
 func LoadStoreFromFile(name string) (*StandardStore, error) {
@@ -16,7 +18,8 @@ func LoadStoreFromFile(name string) (*StandardStore, error) {
 }
 
 func LoadStore(reader io.Reader) (*StandardStore, error) {
-	decoder := gob.NewDecoder(reader)
+	bufr := snappy.NewReader(reader)
+	decoder := gob.NewDecoder(bufr)
 	var hmap map[string]string
 	err := decoder.Decode(&hmap)
 	if err != nil {
@@ -35,6 +38,7 @@ func SaveStoreToFile(store *StandardStore, name string) error {
 }
 
 func SaveStore(store *StandardStore, writer io.Writer) error {
-	encoder := gob.NewEncoder(writer)
+	bufw := snappy.NewBufferedWriter(writer)
+	encoder := gob.NewEncoder(bufw)
 	return encoder.Encode(store.hmap)
 }
