@@ -60,7 +60,7 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	select {
 	case <-h.ctx.Done():
 		hangup(conn)
-		<-time.After(500 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	case <-errch:
 	}
 }
