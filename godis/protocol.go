@@ -27,6 +27,12 @@ const (
 	TypeErr = "ERR"
 )
 
+const (
+	ErrUnknownCmd = "unknown command"
+	ErrWrongArgs  = "wrong number of arguments for command"
+	ErrWrongType  = "WRONGTYPE operation against a key holding the wrong kind of value"
+)
+
 type Reply struct {
 	Value any    `json:"v"`
 	Type  string `json:"t"`

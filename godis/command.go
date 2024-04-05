@@ -37,12 +37,6 @@ func defaultOperations() map[string]operation {
 	}
 }
 
-const (
-	ErrUnknownCmd = "unknown command"
-	ErrWrongArgs  = "wrong number of arguments for command"
-	ErrWrongType  = "WRONGTYPE operation against a key holding the wrong kind of value"
-)
-
 func operationSet(args []string, st Store) (*Reply, error) {
 	if len(args) != 2 {
 		return NewReplyErr(ErrWrongArgs), nil
