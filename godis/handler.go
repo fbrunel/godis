@@ -50,7 +50,6 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			log.Printf("-> sent: %v (%v)", *rep, delta)
 		}
-		log.Printf("Go routine ended")
 	}()
 
 	select {
