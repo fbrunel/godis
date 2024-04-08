@@ -28,7 +28,7 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("<< conn: %s", conn.RemoteAddr())
 
-	errch := make(chan error)
+	errch := make(chan error, 1)
 	go func() {
 		for {
 			var c Command

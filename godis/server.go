@@ -42,7 +42,7 @@ func NewServer(opt Options) *Server {
 func (srv *Server) Start(ctx context.Context) error {
 	srv.setup(ctx)
 
-	errch := make(chan error)
+	errch := make(chan error, 1)
 	go func() {
 		log.Printf("-- serv: %s", srv.opt.Addr)
 		err := srv.http.ListenAndServe()
