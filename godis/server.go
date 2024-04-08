@@ -9,16 +9,16 @@ import (
 )
 
 type Options struct {
-	Addr     string
-	URLPath  string
-	Dumpfile string
+	Addr    string
+	URLPath string
+	Storefn string
 }
 
 func DefaultOptions() Options {
 	return Options{
-		Addr:     ":8080",
-		URLPath:  "/cmd",
-		Dumpfile: "/tmp/godis.dump",
+		Addr:    ":8080",
+		URLPath: "/cmd",
+		Storefn: "/tmp/godis.dump",
 	}
 }
 
@@ -62,8 +62,8 @@ func (srv *Server) Start(ctx context.Context) error {
 //
 
 func (srv *Server) setup(ctx context.Context) {
-	log.Printf("-- load: %s", srv.opt.Dumpfile)
-	store, err := LoadStoreFromFile(srv.opt.Dumpfile)
+	log.Printf("-- load: %s", srv.opt.Storefn)
+	store, err := LoadStoreFromFile(srv.opt.Storefn)
 	if err != nil {
 		log.Printf("EE %v", err)
 		store = NewStandardStore()
@@ -86,8 +86,8 @@ func (srv *Server) shutdown() error {
 		return err
 	}
 
-	log.Printf("-- save: %s", srv.opt.Dumpfile)
-	err = SaveStoreToFile(srv.store, srv.opt.Dumpfile)
+	log.Printf("-- save: %s", srv.opt.Storefn)
+	err = SaveStoreToFile(srv.store, srv.opt.Storefn)
 	if err != nil {
 		return err
 	}

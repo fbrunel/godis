@@ -21,14 +21,14 @@ func run(options godis.Options) error {
 
 func main() {
 	addr := flag.String("addr", ":8080", "server address:port")
-	dump := flag.String("dump", "/tmp/godis.dump", "pathname of the dump file")
+	storefn := flag.String("store", "/tmp/godis.dump", "pathname of the store file")
 
 	flag.Parse()
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.LUTC)
 
 	options := godis.DefaultOptions()
 	options.Addr = *addr
-	options.Dumpfile = *dump
+	options.Storefn = *storefn
 
 	err := run(options)
 	if err != nil {
