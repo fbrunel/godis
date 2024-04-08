@@ -35,7 +35,7 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			err := conn.ReadJSON(&c)
 			if err != nil {
 				errch <- err
-				return
+				break
 			}
 			log.Printf("<- recv: %v", c)
 
@@ -46,16 +46,17 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			err = conn.WriteJSON(*rep)
 			if err != nil {
 				errch <- err
-				return
+				break
 			}
 			log.Printf("-> sent: %v (%v)", *rep, delta)
 		}
+		log.Printf("Go routine ended")
 	}()
 
 	select {
 	case <-r.Context().Done():
 		hangup(conn)
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(250 * time.Millisecond)
 	case err = <-errch:
 		log.Printf("EE (%s) %v", conn.RemoteAddr(), err)
 	}
