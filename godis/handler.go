@@ -30,9 +30,13 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	errch := make(chan error, 1)
 	go func() {
+		var err error
 		for {
 			var c Command
-			err := conn.ReadJSON(&c)
+			// ReadJSON blocks undefinitely waiting for data to be read
+			// but will exit when conn.Close() is called, when ServeHTTP()
+			// terminates.
+			err = conn.ReadJSON(&c)
 			if err != nil {
 				errch <- err
 				break
@@ -50,14 +54,15 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			log.Printf("-> sent: %v (%v)", *rep, delta)
 		}
+		log.Printf(">> conn: %s (%v)", conn.RemoteAddr(), err)
 	}()
 
 	select {
 	case <-r.Context().Done():
 		hangup(conn)
 		time.Sleep(250 * time.Millisecond)
-	case err = <-errch:
-		log.Printf("EE (%s) %v", conn.RemoteAddr(), err)
+	case <-errch:
+		// Do nothing
 	}
 }
 
