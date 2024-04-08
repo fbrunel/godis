@@ -1,7 +1,6 @@
 package godis
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"time"
@@ -10,13 +9,11 @@ import (
 )
 
 type CommandHandler struct {
-	ctx     context.Context
 	service *CommandService
 }
 
-func NewCommandHandler(ctx context.Context, srv *CommandService) *CommandHandler {
+func NewCommandHandler(srv *CommandService) *CommandHandler {
 	return &CommandHandler{
-		ctx:     ctx,
 		service: srv,
 	}
 }
@@ -37,9 +34,8 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			var c Command
 			err := conn.ReadJSON(&c)
 			if err != nil {
-				log.Printf("EE (%s) %v", conn.RemoteAddr(), err)
 				errch <- err
-				break
+				return
 			}
 			log.Printf("<- recv: %v", c)
 
@@ -49,19 +45,19 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			err = conn.WriteJSON(*rep)
 			if err != nil {
-				log.Printf("EE (%s) %v", conn.RemoteAddr(), err)
 				errch <- err
-				break
+				return
 			}
 			log.Printf("-> sent: %v (%v)", *rep, delta)
 		}
 	}()
 
 	select {
-	case <-h.ctx.Done():
+	case <-r.Context().Done():
 		hangup(conn)
 		time.Sleep(500 * time.Millisecond)
-	case <-errch:
+	case err = <-errch:
+		log.Printf("EE (%s) %v", conn.RemoteAddr(), err)
 	}
 }
 

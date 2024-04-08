@@ -3,10 +3,8 @@ package godis
 import (
 	"context"
 	"log"
+	"net"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -27,8 +25,8 @@ func DefaultOptions() Options {
 //
 
 type Server struct {
-	opt     Options
 	http    http.Server
+	opt     Options
 	store   *StandardStore
 	service *CommandService
 	handler *CommandHandler
@@ -36,18 +34,18 @@ type Server struct {
 
 func NewServer(opt Options) *Server {
 	return &Server{
-		opt:  opt,
 		http: http.Server{Addr: opt.Addr},
+		opt:  opt,
 	}
 }
 
-func (s *Server) Start() error {
-	s.init()
+func (srv *Server) Start(ctx context.Context) error {
+	srv.setup(ctx)
 
 	errch := make(chan error)
 	go func() {
-		log.Printf("-- serv: %s", s.opt.Addr)
-		err := s.http.ListenAndServe()
+		log.Printf("-- serv: %s", srv.opt.Addr)
+		err := srv.http.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			errch <- err
 		}
@@ -56,52 +54,44 @@ func (s *Server) Start() error {
 	select {
 	case err := <-errch:
 		return err
-	case <-signals():
-		return s.shutdown()
+	case <-ctx.Done():
+		return srv.shutdown()
 	}
 }
 
 //
 
-func (s *Server) init() {
-	log.Printf("-- load: %s", s.opt.Dumpfile)
-	store, err := LoadStoreFromFile(s.opt.Dumpfile)
+func (srv *Server) setup(ctx context.Context) {
+	log.Printf("-- load: %s", srv.opt.Dumpfile)
+	store, err := LoadStoreFromFile(srv.opt.Dumpfile)
 	if err != nil {
 		log.Printf("EE %v", err)
 		store = NewStandardStore()
 	}
 
-	s.store = store
-	s.service = NewCommandService(s.store)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	s.handler = NewCommandHandler(ctx, s.service)
+	srv.store = store
+	srv.service = NewCommandService(srv.store)
+	srv.handler = NewCommandHandler(srv.service)
 
 	router := http.NewServeMux()
-	router.Handle(s.opt.URLPath, s.handler)
-	s.http.Handler = router
-	s.http.RegisterOnShutdown(func() { cancel() })
+	router.Handle(srv.opt.URLPath, srv.handler)
+	srv.http.Handler = router
+	srv.http.BaseContext = func(_ net.Listener) context.Context { return ctx }
 }
 
-func (s *Server) shutdown() error {
+func (srv *Server) shutdown() error {
 	log.Printf("-- shutting down")
-	err := s.http.Shutdown(context.Background())
+	err := srv.http.Shutdown(context.Background())
 	if err != nil {
 		return err
 	}
 
-	log.Printf("-- save: %s", s.opt.Dumpfile)
-	err = SaveStoreToFile(s.store, s.opt.Dumpfile)
+	log.Printf("-- save: %s", srv.opt.Dumpfile)
+	err = SaveStoreToFile(srv.store, srv.opt.Dumpfile)
 	if err != nil {
 		return err
 	}
 
 	time.Sleep(1 * time.Second)
 	return nil
-}
-
-func signals() chan os.Signal {
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	return ch
 }

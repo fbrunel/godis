@@ -1,11 +1,23 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
+	"os/signal"
+	"syscall"
 
 	"github.com/fbrunel/godis/godis"
 )
+
+func run(options godis.Options) error {
+	ctx, stop := signal.NotifyContext(context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM)
+	defer stop()
+
+	return godis.NewServer(options).Start(ctx)
+}
 
 func main() {
 	addr := flag.String("addr", ":8080", "server address:port")
@@ -18,9 +30,8 @@ func main() {
 	options.Addr = *addr
 	options.Dumpfile = *dump
 
-	server := godis.NewServer(options)
-	err := server.Start()
+	err := run(options)
 	if err != nil {
-		log.Fatalf("EE %v", err)
+		log.Printf("EE %v", err)
 	}
 }
