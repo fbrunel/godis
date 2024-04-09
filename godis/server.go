@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"time"
 )
 
 type Options struct {
@@ -80,6 +79,8 @@ func (srv *Server) setup(ctx context.Context) {
 }
 
 func (srv *Server) shutdown() error {
+	defer srv.handler.WaitClose()
+
 	log.Printf("-- shutting down")
 	err := srv.http.Shutdown(context.Background())
 	if err != nil {
@@ -92,6 +93,5 @@ func (srv *Server) shutdown() error {
 		return err
 	}
 
-	time.Sleep(1 * time.Second)
 	return nil
 }

@@ -3,12 +3,14 @@ package godis
 import (
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 type CommandHandler struct {
+	wg      sync.WaitGroup
 	service *CommandService
 }
 
@@ -16,6 +18,10 @@ func NewCommandHandler(srv *CommandService) *CommandHandler {
 	return &CommandHandler{
 		service: srv,
 	}
+}
+
+func (h *CommandHandler) WaitClose() {
+	h.wg.Wait()
 }
 
 func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +35,9 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("<< conn: %s", conn.RemoteAddr())
 
 	errch := make(chan error, 1)
+	h.wg.Add(1)
 	go func() {
+		defer h.wg.Done()
 		var err error
 		for {
 			var c Command
