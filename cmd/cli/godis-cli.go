@@ -61,7 +61,7 @@ func FmtReply(r *godis.Reply) string {
 //
 
 func main() {
-	addr := flag.String("addr", ":8080", "server address:port")
+	addr := flag.String("addr", ":8080", "server host:port")
 	verb := flag.Bool("v", false, "verbose")
 	flag.Parse()
 	log.SetFlags(0)
